@@ -1,0 +1,174 @@
+import java.lang.System;
+import java.io.*;
+
+class Lexer {
+
+	Yylex tokenizer;
+	public  Lexer(String fileName)
+	{
+	  try
+	  {
+	  tokenizer=new Yylex(new BufferedReader(new FileReader(fileName)));
+	  }
+	  catch(Exception e)
+	  {
+
+	  }
+	}
+	public Token nextToken()
+	{
+		Token next=null;
+		try
+		{
+		 next=  tokenizer.getToken();
+		}
+		catch(Exception e)
+		{
+		}
+		return next;
+	}
+	}
+
+
+%%
+
+
+%function getToken
+%type Token
+%char
+%line
+
+
+%{
+	//initialize  variables to be used by class
+%}
+
+
+%init{
+
+//Add code to be executed on initialization of the lexer
+
+%init}
+
+%eofval{
+//Add code to be executed when the end of the file is reached
+return (new Token(Token.EOF, "Done"));
+%eofval}
+
+%state SCOPED
+
+DIGIT=([0-9])
+DIGITS=({DIGIT}+)
+LETTER=([a-zA-Z])
+LETTER_=({LETTER}|{UNDERSCORE})
+LETTERS=({LETTER}+)
+UNDERSCORE=(_)
+
+IDENTIFIER=({LETTER_}({LETTER_}|{DIGIT})*)
+STRING_LIT=(\"(\\\"|[^\"\n])*\"|\`(\\\"|[^\`])*\`)
+EQUAL=(=)
+PACKAGE=(package)
+IMPORT=(import)
+CONST=(const)
+FUNC=(func)
+BREAK=(break)
+SWITCH=(switch)
+DEFAULT=(default)
+CASE=(case)
+TYPE=(type)
+STRUCT=(struct)
+OPEN_CURLY=(\{)
+CLOSE_CURLY=(\})
+OPEN_PARAN=(\()
+CLOSE_PARAN=(\))
+OPEN_SQUARE=(\[)
+CLOSE_SQUARE=(\])
+VAR=(var)
+FOR=(for)
+RETURN=(return)
+IF=(if)
+ELSE=(else)
+AND_OP=(&&)
+OR_OP=(\|\|)
+REL_OP=((==|!=|>|>=|<|<=))
+COLON=(:)
+COLON_EQUAL=(:=)
+SEMI_COLON=(;)
+DOT=(\.)
+ASTRISK=(\*)
+COMMA=(,)
+PERCENT=(%)
+EXCLAMATION=(!)
+LESS_DASH=(<-)
+BAR=(\|)
+AMBERSAND=(&)
+SLASH=(/)
+PLUS=(\+)
+MINUS=(-)
+INCREMENT=(\+\+)
+DECREMENT=(--)
+CDOTS=(\.\.\.)
+
+SHIFT_LEFT=(<<)
+SHIFT_RIGHT=(>>)
+
+NEWLINE=[\n]
+SPACE=[ \t]
+COMMENT=(//.*)
+
+%%
+<YYINITIAL> {PACKAGE} { return new Token(Token.PACKAGE, yytext()); }
+<YYINITIAL> {IMPORT} { return new Token(Token.IMPORT, yytext()); }
+
+<YYINITIAL, SCOPED> {IF} { return new Token(Token.IF, yytext()); }
+<YYINITIAL, SCOPED> {ELSE} { return new Token(Token.ELSE, yytext()); }
+<YYINITIAL, SCOPED> {COLON_EQUAL} { return new Token(Token.COLON_EQUAL, yytext()); }
+<YYINITIAL, SCOPED> {COLON} { return new Token(Token.COLON, yytext()); }
+<YYINITIAL, SCOPED> {BREAK} { return new Token(Token.BREAK, yytext()); }
+<YYINITIAL, SCOPED> {SWITCH} { return new Token(Token.SWITCH, yytext()); }
+<YYINITIAL, SCOPED> {CASE} { return new Token(Token.CASE, yytext()); }
+<YYINITIAL, SCOPED> {DEFAULT} { return new Token(Token.DEFAULT, yytext()); }
+<YYINITIAL, SCOPED> {FOR} { return new Token(Token.FOR, yytext()); }
+<YYINITIAL, SCOPED> {INCREMENT} { return new Token(Token.INCREMENT, yytext()); }
+<YYINITIAL, SCOPED> {DECREMENT} { return new Token(Token.DECREMENT, yytext()); }
+<YYINITIAL, SCOPED> {RETURN} { return new Token(Token.RETURN, yytext()); }
+
+<YYINITIAL, SCOPED> {PLUS} { return new Token(Token.PLUS, yytext()); }
+<YYINITIAL, SCOPED> {MINUS} { return new Token(Token.MINUS, yytext()); }
+
+<YYINITIAL, SCOPED> {CONST} { return new Token(Token.CONST, yytext()); }
+<YYINITIAL, SCOPED> {FUNC} { return new Token(Token.FUNC, yytext()); }
+<YYINITIAL, SCOPED> {OPEN_CURLY} { return new Token(Token.OPEN_CURLY, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_CURLY} { return new Token(Token.CLOSE_CURLY, yytext()); }
+<YYINITIAL, SCOPED> {OPEN_PARAN} { return new Token(Token.OPEN_PARAN, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_PARAN} { return new Token(Token.CLOSE_PARAN, yytext()); }
+<YYINITIAL, SCOPED> {OPEN_SQUARE} { return new Token(Token.OPEN_SQUARE, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_SQUARE} { return new Token(Token.CLOSE_SQUARE, yytext()); }
+<YYINITIAL, SCOPED> {TYPE} { return new Token(Token.TYPE, yytext()); }
+<YYINITIAL, SCOPED> {STRUCT} { return new Token(Token.STRUCT, yytext()); }
+<YYINITIAL, SCOPED> {VAR} { return new Token(Token.VAR, yytext()); }
+<YYINITIAL, SCOPED> {CDOTS} { return new Token(Token.CDOTS, yytext()); }
+<YYINITIAL, SCOPED> {DOT} { return new Token(Token.DOT, yytext()); }
+<YYINITIAL, SCOPED> {ASTRISK} { return new Token(Token.ASTRISK, yytext()); }
+<YYINITIAL, SCOPED> {SEMI_COLON} { return new Token(Token.SEMI_COLON, yytext()); }
+<YYINITIAL, SCOPED> {COMMA} { return new Token(Token.COMMA, yytext()); }
+<YYINITIAL, SCOPED> {PERCENT} { return new Token(Token.PERCENT, yytext()); }
+<YYINITIAL, SCOPED> {EXCLAMATION} { return new Token(Token.EXCLAMATION, yytext()); }
+<YYINITIAL, SCOPED> {LESS_DASH} { return new Token(Token.LESS_DASH, yytext()); }
+<YYINITIAL, SCOPED> {AND_OP} { return new Token(Token.AND_OP, yytext()); }
+<YYINITIAL, SCOPED> {OR_OP} { return new Token(Token.OR_OP, yytext()); }
+<YYINITIAL, SCOPED> {REL_OP} { return new Token(Token.REL_OP, yytext()); }
+<YYINITIAL, SCOPED> {BAR} { return new Token(Token.BAR, yytext()); }
+<YYINITIAL, SCOPED> {AMBERSAND} { return new Token(Token.AMBERSAND, yytext()); }
+<YYINITIAL, SCOPED> {SLASH} { return new Token(Token.SLASH, yytext()); }
+<YYINITIAL, SCOPED> {DIGITS} { return new Token(Token.INT_LIT, yytext()); }
+<YYINITIAL, SCOPED> {STRING_LIT} { return new Token(Token.STRING_LIT, yytext()); }
+<YYINITIAL, SCOPED> {EQUAL} { return new Token(Token.EQUAL, yytext()); }
+<YYINITIAL, SCOPED> {SHIFT_LEFT} { return new Token(Token.SHIFT_LEFT, yytext()); }
+<YYINITIAL, SCOPED> {SHIFT_RIGHT} { return new Token(Token.SHIFT_RIGHT, yytext()); }
+<YYINITIAL, SCOPED> {IDENTIFIER} { return new Token(Token.IDENTIFIER, yytext()); }
+<YYINITIAL, SCOPED> {NEWLINE} {}
+<YYINITIAL, SCOPED> {SPACE} {}
+<YYINITIAL, SCOPED> {COMMENT} {}
+
+<YYINITIAL, SCOPED> . { return new Token(Token.ERROR, "Invalid input: " + yytext().trim() + " in line " + (yyline + 1) ); }
