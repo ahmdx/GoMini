@@ -61,7 +61,7 @@ STRING_LIT : "%s."
 COMMA : ,
 IDENTIFIER : os
 CLOSE_PARAN : )
-CLOSE_PARAN : )
+ERROR: ) has no matching ( in line 21
 CLOSE_CURLY : }
 CLOSE_CURLY : }
 EOF: Done

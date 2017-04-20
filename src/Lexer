@@ -1,5 +1,8 @@
+package JLex;
+
 import java.lang.System;
 import java.io.*;
+import java.util.Stack;
 
 class Lexer {
 
@@ -41,18 +44,28 @@ class Lexer {
 
 %{
 	//initialize  variables to be used by class
+	Stack<Integer> stackOfOpenCurlyBraces;
+	Stack<Integer> stackOfOpenParans;
+	Stack<Integer> stackOfOpenSquares;
+	boolean openParansNotClosed;
 %}
 
 
 %init{
 
 //Add code to be executed on initialization of the lexer
+stackOfOpenCurlyBraces = new Stack<Integer>();
+stackOfOpenParans = new Stack<Integer>();
+stackOfOpenSquares = new Stack<Integer>();
 
 %init}
 
 %eofval{
 //Add code to be executed when the end of the file is reached
-return (new Token(Token.EOF, "Done"));
+if(openParansNotClosed)
+	return (new Token(Token.EOF, "There is some ( that is not closed"));
+else
+	return (new Token(Token.EOF, "Done"));
 %eofval}
 
 %state SCOPED
@@ -112,7 +125,7 @@ CDOTS=(\.\.\.)
 SHIFT_LEFT=(<<)
 SHIFT_RIGHT=(>>)
 
-NEWLINE=[\n]
+NEWLINE=[\r\n|\n]
 SPACE=[ \t]
 COMMENT=(//.*)
 
@@ -138,12 +151,12 @@ COMMENT=(//.*)
 
 <YYINITIAL, SCOPED> {CONST} { return new Token(Token.CONST, yytext()); }
 <YYINITIAL, SCOPED> {FUNC} { return new Token(Token.FUNC, yytext()); }
-<YYINITIAL, SCOPED> {OPEN_CURLY} { return new Token(Token.OPEN_CURLY, yytext()); }
-<YYINITIAL, SCOPED> {CLOSE_CURLY} { return new Token(Token.CLOSE_CURLY, yytext()); }
-<YYINITIAL, SCOPED> {OPEN_PARAN} { return new Token(Token.OPEN_PARAN, yytext()); }
-<YYINITIAL, SCOPED> {CLOSE_PARAN} { return new Token(Token.CLOSE_PARAN, yytext()); }
-<YYINITIAL, SCOPED> {OPEN_SQUARE} { return new Token(Token.OPEN_SQUARE, yytext()); }
-<YYINITIAL, SCOPED> {CLOSE_SQUARE} { return new Token(Token.CLOSE_SQUARE, yytext()); }
+<YYINITIAL, SCOPED> {OPEN_CURLY} { stackOfOpenCurlyBraces.add(yyline); return new Token(Token.OPEN_CURLY, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_CURLY} { if(!stackOfOpenParans.isEmpty()) { openParansNotClosed = true; return new Token(Token.ERROR, "You have a missing bracket in line " + (yyline+1)); } if(!stackOfOpenCurlyBraces.isEmpty()) { stackOfOpenCurlyBraces.pop(); return new Token(Token.CLOSE_CURLY, yytext()); } else return new Token(Token.ERROR, "} has no matching { in line " + (yyline+1)); }
+<YYINITIAL, SCOPED> {OPEN_PARAN} { stackOfOpenParans.add(yyline); return new Token(Token.OPEN_PARAN, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_PARAN} {if(!stackOfOpenParans.isEmpty()) { stackOfOpenParans.pop(); return new Token(Token.CLOSE_PARAN, yytext()); } else return new Token(Token.ERROR, ") has no matching ( in line " + (yyline+1)); }
+<YYINITIAL, SCOPED> {OPEN_SQUARE} { stackOfOpenSquares.add(yyline); return new Token(Token.OPEN_SQUARE, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_SQUARE} { if(!stackOfOpenSquares.isEmpty()) { stackOfOpenSquares.pop(); return new Token(Token.CLOSE_SQUARE, yytext()); } else return new Token(Token.ERROR, "] has no matching [ in line " + (yyline+1));}
 <YYINITIAL, SCOPED> {TYPE} { return new Token(Token.TYPE, yytext()); }
 <YYINITIAL, SCOPED> {STRUCT} { return new Token(Token.STRUCT, yytext()); }
 <YYINITIAL, SCOPED> {VAR} { return new Token(Token.VAR, yytext()); }
