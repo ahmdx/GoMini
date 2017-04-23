@@ -8,8 +8,8 @@ public class AP {
 
 	public static void main(String[] args) {
 
-		String inFile = "MS2/Go1.in";
-		String outFile = "MS2/Go1.out";
+		String inFile = "MS2/Go10.in";
+		String outFile = "MS2/Go10.out";
 
 		if (args.length > 1) {
 			inFile = args[0];

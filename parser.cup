@@ -1,7 +1,7 @@
 import java.io.*;
 import java_cup.runtime.*;
 
-// [] = ?				 -> _zone
+// [] = ?
 // {} = *				 -> _st
 // () = grouping -> _grp
 
@@ -24,80 +24,92 @@ terminal			IDENTIFIER;
 
 terminal			STRING_LIT, INT_LIT;
 
-terminal			FOR, CONST, VAR, IF, ELSE, SWITCH, CASE, FUNC, DEFAULT, TYPE, BREAK,
-					RETURN, STRUCT;
+terminal			FOR, CONST, VAR, IF, ELSE, SWITCH, CASE, FUNC, DEFAULT,
+							TYPE, BREAK, RETURN, STRUCT;
 
 terminal			COLON, COLON_EQUAL;
 terminal			INCREMENT, DECREMENT;
 terminal			REL_OP, AND_OP, OR_OP;
 terminal			LESS_DASH, SHIFT_LEFT, SHIFT_RIGHT;
 terminal			DOT, COMMA, SEMI_COLON, PERCENT, EXCLAMATION, ASTRISK,
-					AMBERSAND, BAR, SLASH, EQUAL, PLUS, MINUS, OPEN_PARAN, CLOSE_PARAN,
-					OPEN_CURLY, CLOSE_CURLY, OPEN_SQUARE, CLOSE_SQUARE, CDOTS;
+							AMBERSAND, BAR, SLASH, EQUAL, PLUS, MINUS, OPEN_PARAN, 
+							CLOSE_PARAN, OPEN_CURLY, CLOSE_CURLY, OPEN_SQUARE, 
+							CLOSE_SQUARE, CDOTS;
 
 /* Non-terminals */
 nonterminal		source_file, import_decl_st;
 nonterminal		package_clause, package_name;
 nonterminal		import_decl, import_decl_grp, import_spec_st,
-							import_spec, dot_pckg_name, import_path;
+							import_spec, import_path;
 
 nonterminal		top_level_decl, top_level_decl_st;
-nonterminal		declaration, function_decl, method_decl;
-nonterminal 	type_decl, type_decl_gr, type_spec, type_spec_st;
+nonterminal		declaration;
 
-nonterminal 	const_decl, const_decl_grp, const_spec, const_spec_st,
-							const_spec_help, const_spec_help_zone;
+nonterminal 	const_decl, const_decl_grp, const_spec, const_spec_st;
+nonterminal 	type_decl, type_decl_gr, type_spec, type_spec_st;
 nonterminal 	var_decl, var_decl_grp, var_spec, var_spec_grp, var_spec_st,
 							short_var_decl;
 nonterminal 	identifier_list, identifier_st;
-nonterminal 	eq_expression, eq_expression_zone;
 
 nonterminal		binary_op, add_op, mul_op, unary_op;
 
-nonterminal		type, type_zone, type_name, type_lit, type_type_scol, type_type_scol_zone;
+nonterminal		type, type_name, type_lit;
 nonterminal 	array_type, slice_type, element_type;
 nonterminal 	struct_type, field_decl, field_decl_grp, field_decl_st;
 nonterminal 	anonymous_field;
-nonterminal		tag, tag_zone;
+nonterminal		tag;
 							
 nonterminal 	array_length;
 
+nonterminal 	function_decl, func_sign_grp, function_name, function, function_body,
+							block;
 nonterminal 	function_type, signature, parameters, parameter_list,
-							parameter_list_zone, result, result_zone,
-							parameter_decl, parameter_decl_st, method_name;
+							result, parameter_decl, parameter_decl_st;
 
-nonterminal 	expression, expression_zone, expression_list, expression_st, unary_expr,
-							primary_expr, selector, index, slice, arguments,
-							type_expr_list, type_expr_list_zone;
-nonterminal 	operand, literal, operand_name, method_expr, qualified_ident;
+nonterminal 	method_decl, method_expr, method_name, receiver, receiver_type;
+
+nonterminal 	expression, expression_list,
+							expression_st, unary_expr, primary_expr, selector, index,
+							slice, arguments;
+nonterminal 	operand, literal, operand_name, qualified_ident;
 nonterminal 	basic_lit, composite_lit, function_lit;
 nonterminal 	literal_type, literal_value;
-nonterminal 	element_list, element_list_zone, keyed_element, keyed_element_st;
-nonterminal 	key, key_col_zone, element, field_name;
+nonterminal 	element_list, keyed_element, keyed_element_st;
+nonterminal 	key, element, field_name;
 
-nonterminal 	break_stmt;
+/* Statement ********************************************************/
+nonterminal 	statement, statement_st, statement_list;
+nonterminal 	simple_stmt, expression_stmt, inc_dec_stmt,
+							inc_dec_stmt_grp, assignment, assign_op;
+nonterminal 	return_stmt, break_stmt;
+nonterminal 	if_stmt, else_if_block_grp;
+nonterminal 	switch_stmt, expr_switch_stmt, expr_case_clause, expr_case_clause_st,
+							expr_switch_case;
+nonterminal 	for_stmt, condition, for_clause,
+							init_stmt, post_stmt;
+/********************************************************************/
 
-nonterminal		asterisk_zone, semi_col_zone, cdots_zone;
-
-precedence left COMMA;
-precedence left AND_OP;
-precedence left OR_OP;
-precedence left AMBERSAND;
-precedence left REL_OP;
-precedence left BAR;
-precedence left SHIFT_LEFT, SHIFT_RIGHT;
-precedence left PLUS, MINUS;
-precedence left ASTRISK, SLASH, PERCENT;
-precedence right TYPE, IDENTIFIER;
-precedence left INCREMENT, DECREMENT, OPEN_PARAN, CLOSE_PARAN, OPEN_CURLY, CLOSE_CURLY;
+precedence left 	COMMA;
+precedence left 	OR_OP;
+precedence left 	AND_OP;
+precedence left 	BAR;
+precedence left 	AMBERSAND;
+precedence left 	REL_OP;
+precedence left 	SHIFT_LEFT, SHIFT_RIGHT;
+precedence left 	PLUS, MINUS;
+precedence left 	ASTRISK, SLASH, PERCENT;
+precedence left 	OPEN_PARAN, CLOSE_PARAN;
 
 start with source_file;
 
 /* The grammar */
 
 /* Source file ******************************************************/
-source_file 		::= package_clause semi_col_zone import_decl_st top_level_decl_st;
-import_decl_st	::= import_decl_st import_decl semi_col_zone
+source_file 		::= package_clause import_decl_st top_level_decl_st
+										| package_clause SEMI_COLON import_decl_st top_level_decl_st
+										;
+import_decl_st	::= import_decl import_decl_st
+										| import_decl SEMI_COLON import_decl_st
 										|
 										;
 /********************************************************************/
@@ -112,13 +124,13 @@ import_decl 		 ::= IMPORT import_decl_grp;
 import_decl_grp	 ::= import_spec
 										 | OPEN_PARAN import_spec_st CLOSE_PARAN
 										 ;
-/* { ImportSpec[";"] } */
-import_spec_st 	 ::= import_spec_st import_spec semi_col_zone
-										 |
+import_spec 		 ::= DOT import_path
+										 | package_name import_path
+										 | import_path
 										 ;
-import_spec 		 ::= dot_pckg_name import_path;
-dot_pckg_name		 ::= DOT
-										 | package_name
+/* { ImportSpec[";"] } */
+import_spec_st 	 ::= import_spec import_spec_st
+										 | import_spec SEMI_COLON import_spec_st
 										 |
 										 ;
 import_path 		 ::= STRING_LIT;
@@ -127,29 +139,31 @@ import_path 		 ::= STRING_LIT;
 /* Top Level Declaration ********************************************/
 
 top_level_decl		::= declaration
-											//| function_decl semi_col_zone
-											//| method_decl semi_col_zone
+											| function_decl
+											| function_decl SEMI_COLON
+											| method_decl
+											| method_decl 	SEMI_COLON
 											;
 top_level_decl_st ::= top_level_decl top_level_decl_st
 											|
 											;
 
 /* Declaration ******************************************************/
-declaration 	::= const_decl SEMI_COLON
-									| type_decl semi_col_zone
-									| var_decl SEMI_COLON
-									;
+declaration 					::= const_decl 	SEMI_COLON
+													| type_decl
+													| type_decl SEMI_COLON
+													| var_decl 	SEMI_COLON
+													;
 
 const_decl 						::= CONST const_decl_grp;
 const_decl_grp				::= const_spec
 													| OPEN_PARAN const_spec_st CLOSE_PARAN
 													;
-const_spec 						::= IDENTIFIER const_spec_help_zone;
-const_spec_st 				::= const_spec SEMI_COLON const_spec_st
-													|
+const_spec 						::= IDENTIFIER 
+													| IDENTIFIER EQUAL expression
+													| IDENTIFIER type EQUAL expression
 													;
-const_spec_help 			::= type_zone EQUAL expression;
-const_spec_help_zone	::= const_spec_help
+const_spec_st 				::= const_spec SEMI_COLON const_spec_st
 													|
 													;
 type_decl 						::= TYPE type_decl_gr;
@@ -165,12 +179,9 @@ var_decl_grp 					::= var_spec
 													| OPEN_PARAN var_spec_st CLOSE_PARAN
 													;
 var_spec 							::= IDENTIFIER var_spec_grp;
-var_spec_grp 					::= type eq_expression_zone
-													| eq_expression
-													|
-													;
-eq_expression 				::= EQUAL expression;
-eq_expression_zone 		::= eq_expression
+var_spec_grp 					::= type
+													| type EQUAL expression
+													| EQUAL expression
 													|
 													;
 var_spec_st 					::= var_spec SEMI_COLON var_spec_st
@@ -181,13 +192,106 @@ identifier_list 			::= IDENTIFIER identifier_st;
 identifier_st 				::= COMMA IDENTIFIER identifier_st
 													|
 													;
+/* Function *********************************************************/
+function_decl 				::= FUNC function_name func_sign_grp;
+func_sign_grp 				::= function
+													| signature
+													;
+function_name 				::= IDENTIFIER;
+function 							::= signature function_body;
+function_body 				::= block;
+/* Method ***********************************************************/
+method_decl 					::= FUNC receiver method_name func_sign_grp;
+receiver 							::= parameters;
+method_name					 	::= IDENTIFIER;
+/* Block ************************************************************/
+block 								::= OPEN_CURLY statement_list CLOSE_CURLY;
+/* Statement ********************************************************/
+statement 						::= declaration
+													| simple_stmt SEMI_COLON
+													| return_stmt SEMI_COLON
+													| break_stmt 	SEMI_COLON
+													| block
+													| block 			SEMI_COLON
+													| if_stmt
+													| if_stmt 		SEMI_COLON
+													| switch_stmt
+													| switch_stmt SEMI_COLON
+													| for_stmt
+													| for_stmt 		SEMI_COLON
+													;
+statement_list 				::= statement_st;
+statement_st 					::= statement statement_st
+													|
+													;
+simple_stmt 					::= expression_stmt
+													| inc_dec_stmt
+													| assignment
+													| short_var_decl
+													;
+expression_stmt 			::= expression;
+inc_dec_stmt 					::= expression inc_dec_stmt_grp;
+inc_dec_stmt_grp			::= INCREMENT
+													| DECREMENT
+													;
+/* Assignment *******************************************************/
+assignment 						::= expression_list assign_op expression_list;
+assign_op 						::= EQUAL
+													| add_op EQUAL
+													| mul_op EQUAL
+													;
+/* IF ELSE statement ************************************************/
+if_stmt 							::= IF expression block
+													| IF expression block ELSE else_if_block_grp
+													| IF simple_stmt SEMI_COLON expression block
+													| IF simple_stmt SEMI_COLON expression block ELSE else_if_block_grp
+													;
+else_if_block_grp 				::= if_stmt
+													| block
+													;
+/* SWITCH statement *************************************************/
+switch_stmt 					::= expr_switch_stmt;
+// expr_switch_stmt 			::= SWITCH simple_stmt_scol_zone expression_zone OPEN_CURLY expr_case_clause_st CLOSE_CURLY;
+expr_switch_stmt 			::= SWITCH OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+													| SWITCH expression OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+													| SWITCH simple_stmt SEMI_COLON OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+													| SWITCH simple_stmt SEMI_COLON expression OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+													;
+expr_case_clause 			::= expr_switch_case COLON statement_list;
+expr_case_clause_st 	::= expr_case_clause expr_case_clause_st
+													|
+													;
+expr_switch_case 			::= CASE expression_list
+													| DEFAULT
+													;
+/* FOR statement ****************************************************/
+for_stmt 							::= FOR block
+													| FOR condition block
+													| FOR for_clause block
+													;
+condition 						::= expression;
+// for_clause 						::= init_stmt_zone SEMI_COLON condition_zone SEMI_COLON post_stmt_zone;
+for_clause 						::= SEMI_COLON SEMI_COLON
+													| SEMI_COLON SEMI_COLON post_stmt
+													| SEMI_COLON condition SEMI_COLON
+													| SEMI_COLON condition SEMI_COLON post_stmt
+													| init_stmt SEMI_COLON SEMI_COLON
+													| init_stmt SEMI_COLON SEMI_COLON post_stmt
+													| init_stmt SEMI_COLON condition SEMI_COLON
+													| init_stmt SEMI_COLON condition SEMI_COLON post_stmt
+													;
+init_stmt 						::= simple_stmt;
+post_stmt 						::= simple_stmt;
+/* BREAK statement **************************************************/
+break_stmt 						::= BREAK;
+/* RETURN statement *************************************************/
+return_stmt 					::= RETURN
+													| RETURN expression_list
+													;
 /********************************************************************/
 
 /* Type *************************************************************/
 type 					::= type_name | type_lit;
-type_zone 		::= type
-									|
-									;
 type_name 		::= IDENTIFIER;
 type_lit			::= array_type
 									| struct_type
@@ -199,45 +303,42 @@ array_length 			::= expression;
 element_type			::= type;
 slice_type 				::= OPEN_SQUARE CLOSE_SQUARE element_type;
 struct_type 			::= STRUCT OPEN_CURLY field_decl_st CLOSE_CURLY;
-field_decl 				::= field_decl_grp tag_zone;
+field_decl 				::= field_decl_grp
+											| field_decl_grp tag
+											;
 field_decl_grp		::= identifier_list type
 											| anonymous_field
 											;
 field_decl_st 		::= field_decl SEMI_COLON field_decl_st
 											|
 											;
-anonymous_field 	::= asterisk_zone type_name;
+anonymous_field 	::= type_name
+											| ASTRISK type_name
+											;
 tag 							::= STRING_LIT;
-tag_zone 					::= tag
-						 					|
-						 					;
 /* Function *********************************************************/
 function_type 				::= FUNC signature;
-signature 						::= parameters result_zone;
+signature 						::= parameters
+													| parameters result
+													;
 result 								::= parameters
 													| OPEN_PARAN type CLOSE_PARAN
 													;
-result_zone 					::= result
-													|
+parameters 						::= OPEN_PARAN CLOSE_PARAN
+													| OPEN_PARAN parameter_list CLOSE_PARAN
 													;
-parameters 						::= OPEN_PARAN parameter_list_zone CLOSE_PARAN;
 parameter_list 				::= parameter_decl parameter_decl_st;
-parameter_list_zone 	::= parameter_list
+parameter_decl  			::= identifier_list type
+													| identifier_list CDOTS type
+													;
+parameter_decl_st			::= COMMA parameter_decl parameter_decl_st
 													|
 													;
-parameter_decl  			::= identifier_list cdots_zone type;
-parameter_decl_st			::= COMMA parameter_decl_st
-													|
-													;
-method_name					 	::= IDENTIFIER;
 /********************************************************************/
 
 /* Expression *******************************************************/
 expression		 				::= unary_expr
 													| expression binary_op expression
-													;
-expression_zone				::= expression
-													|
 													;
 expression_list 			::= expression expression_st;
 expression_st 				::= COMMA expression expression_st
@@ -272,18 +373,16 @@ literal_type					::= struct_type
 													| slice_type
 													| TYPE type_name
 													;
-literal_value 				::= OPEN_CURLY element_list_zone CLOSE_CURLY;
-element_list 					::= keyed_element keyed_element_st;
-element_list_zone 		::= element_list
-													|
+literal_value 				::= OPEN_CURLY CLOSE_CURLY
+													| OPEN_CURLY element_list CLOSE_CURLY
 													;
+element_list 					::= keyed_element keyed_element_st;
 key 									::= field_name
 													| literal_value
 													;
-key_col_zone 					::= key COLON
-													|
+keyed_element 				::= element
+													| key COLON element
 													;
-keyed_element 				::= key_col_zone element;
 keyed_element_st 			::= COMMA keyed_element keyed_element_st
 													|
 													;
@@ -291,24 +390,29 @@ field_name 						::= IDENTIFIER;
 element 							::= expression
 													| literal_value
 													;
+function_lit 					::= FUNC function;
 selector 							::= DOT IDENTIFIER;
 index									::= OPEN_SQUARE expression CLOSE_SQUARE;
-slice 								::= OPEN_SQUARE expression_zone COLON expression_zone CLOSE_SQUARE
-													| OPEN_SQUARE expression_zone COLON expression COLON expression CLOSE_SQUARE
+slice 								::= OPEN_SQUARE COLON CLOSE_SQUARE
+													| OPEN_SQUARE COLON expression CLOSE_SQUARE
+													| OPEN_SQUARE expression COLON CLOSE_SQUARE
+													| OPEN_SQUARE expression COLON expression CLOSE_SQUARE
+													| OPEN_SQUARE COLON expression COLON expression CLOSE_SQUARE
+													| OPEN_SQUARE expression COLON expression COLON expression CLOSE_SQUARE
 													;
-arguments 						::= OPEN_PARAN type_expr_list_zone CLOSE_PARAN;
-type_type_scol 				::= TYPE type SEMI_COLON;
-type_type_scol_zone 	::= type_type_scol
-													|
-													;
-type_expr_list 				::= type_type_scol_zone expression_list;
-type_expr_list_zone 	::= type_expr_list
-													|
+arguments 						::= OPEN_PARAN CLOSE_PARAN
+													| OPEN_PARAN expression_list CLOSE_PARAN
+													// | OPEN_PARAN TYPE type COMMA expression_list CLOSE_PARAN
 													;
 operand_name 					::= IDENTIFIER
 													| qualified_ident
 													;
 qualified_ident 			::= DOT package_name DOT IDENTIFIER;
+/* Method ***********************************************************/
+method_expr 					::= DOT receiver_type DOT method_name;
+receiver_type 				::= OPEN_PARAN ASTRISK type_name CLOSE_PARAN
+													| OPEN_PARAN type_name CLOSE_PARAN
+													;
 /********************************************************************/
 
 /* Operators ********************************************************/
@@ -337,15 +441,3 @@ unary_op ::=  PLUS
 							| LESS_DASH
 							;
 /********************************************************************/
-
-break_stmt 	::= BREAK;
-
-asterisk_zone 	::= ASTRISK
-								|
-								;
-semi_col_zone	  ::= SEMI_COLON
-								|
-								;
-cdots_zone	 	  ::= CDOTS
-								|
-								;
