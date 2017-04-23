@@ -90,6 +90,7 @@ nonterminal 	for_stmt, condition, for_clause,
 /********************************************************************/
 
 precedence left 	COMMA;
+precedence right 	EQUAL;
 precedence left 	OR_OP;
 precedence left 	AND_OP;
 precedence left 	BAR;
@@ -97,8 +98,9 @@ precedence left 	AMBERSAND;
 precedence left 	REL_OP;
 precedence left 	SHIFT_LEFT, SHIFT_RIGHT;
 precedence left 	PLUS, MINUS;
+precedence right 	PLUS, MINUS, EXCLAMATION, INCREMENT, DECREMENT;
 precedence left 	ASTRISK, SLASH, PERCENT;
-precedence left 	OPEN_PARAN, CLOSE_PARAN;
+precedence left 	OPEN_PARAN, CLOSE_PARAN, DOT, INCREMENT, DECREMENT;
 
 start with source_file;
 
@@ -292,6 +294,9 @@ return_stmt 					::= RETURN
 
 /* Type *************************************************************/
 type 					::= type_name | type_lit;
+// type_zone 		::= type
+// 									|
+// 									;
 type_name 		::= IDENTIFIER;
 type_lit			::= array_type
 									| struct_type

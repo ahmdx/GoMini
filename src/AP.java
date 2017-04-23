@@ -25,7 +25,7 @@ public class AP {
 			parser parser = new parser(new Lexer(bis));
 
 			try {
-				parser.debug_parse();
+				parser.parse();
 				writer.write("Done");
 			} catch (Exception e) {
 				writer.write("ParseError");
