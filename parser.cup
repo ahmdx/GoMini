@@ -402,7 +402,7 @@ slice 								::= OPEN_SQUARE COLON CLOSE_SQUARE
 													;
 arguments 						::= OPEN_PARAN CLOSE_PARAN
 													| OPEN_PARAN expression_list CLOSE_PARAN
-													// | OPEN_PARAN TYPE type COMMA expression_list CLOSE_PARAN
+													| OPEN_PARAN TYPE type COMMA expression_list CLOSE_PARAN
 													;
 operand_name 					::= IDENTIFIER
 													| qualified_ident
