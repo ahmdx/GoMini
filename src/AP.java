@@ -4,6 +4,8 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 
+import java_cup.runtime.Symbol;
+
 public class AP {
 
 	public static void main(String[] args) {
