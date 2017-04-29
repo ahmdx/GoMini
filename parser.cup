@@ -9,7 +9,13 @@ import java_cup.runtime.*;
 parser code {:
     // Connect this parser to a lexer!
     Lexer lexer;
+    static String output;
     parser(Lexer lexer){ this.lexer=lexer; }
+
+    static int lastTempVar = 0;
+    static String newVar() {
+      return "t" + lastTempVar++;
+    }
 :};
 
 /* define how to connect to the scanner! */
@@ -18,74 +24,63 @@ scan with {: return lexer.next_token(); :};
 
 
 /* Terminals (tokens returned by the scanner). */
-terminal			ERROR;
-terminal			PACKAGE, IMPORT;
-terminal			IDENTIFIER;
+terminal String			ERROR;
+terminal String			PACKAGE, IMPORT;
+terminal String			IDENTIFIER;
 
-terminal			STRING_LIT, INT_LIT;
+terminal String			STRING_LIT, INT_LIT;
 
-terminal			FOR, CONST, VAR, IF, ELSE, SWITCH, CASE, FUNC, DEFAULT,
+terminal String			FOR, CONST, VAR, IF, ELSE, SWITCH, CASE, FUNC, DEFAULT,
 							TYPE, BREAK, RETURN, STRUCT;
 
-terminal			COLON, COLON_EQUAL;
-terminal			INCREMENT, DECREMENT;
-terminal			REL_OP, AND_OP, OR_OP;
-terminal			LESS_DASH, SHIFT_LEFT, SHIFT_RIGHT;
-terminal			DOT, COMMA, SEMI_COLON, PERCENT, EXCLAMATION, ASTRISK,
-							AMBERSAND, BAR, SLASH, EQUAL, PLUS, MINUS, OPEN_PARAN, 
-							CLOSE_PARAN, OPEN_CURLY, CLOSE_CURLY, OPEN_SQUARE, 
+terminal String			COLON, COLON_EQUAL;
+terminal String			INCREMENT, DECREMENT;
+terminal String			REL_OP, AND_OP, OR_OP;
+terminal String			LESS_DASH, SHIFT_LEFT, SHIFT_RIGHT;
+terminal String			DOT, COMMA, SEMI_COLON, PERCENT, EXCLAMATION, ASTRISK,
+							AMBERSAND, BAR, SLASH, EQUAL, PLUS, MINUS, OPEN_PARAN,
+							CLOSE_PARAN, OPEN_CURLY, CLOSE_CURLY, OPEN_SQUARE,
 							CLOSE_SQUARE, CDOTS;
 
 /* Non-terminals */
-nonterminal		source_file, import_decl_st;
-nonterminal		package_clause, package_name;
-nonterminal		import_decl, import_decl_grp, import_spec_st,
+nonterminal String		source_file, import_decl_st;
+nonterminal String		package_clause, package_name;
+nonterminal String		import_decl, import_decl_grp, import_spec_st,
 							import_spec, import_path;
 
-nonterminal		top_level_decl, top_level_decl_st;
-nonterminal		declaration;
+nonterminal String		top_level_decl, top_level_decl_st;
+nonterminal String		declaration;
 
-nonterminal 	const_decl, const_decl_grp, const_spec, const_spec_st;
-nonterminal 	type_decl, type_decl_gr, type_spec, type_spec_st;
-nonterminal 	var_decl, var_decl_grp, var_spec, var_spec_grp, var_spec_st,
+nonterminal String 	const_decl, const_decl_grp, const_spec, const_spec_st;
+nonterminal String 	var_decl, var_decl_grp, var_spec, var_spec_grp, var_spec_st,
 							short_var_decl;
-nonterminal 	identifier_list, identifier_st;
+nonterminal String 	identifier_list, identifier_st;
 
-nonterminal		binary_op, add_op, mul_op, unary_op;
+nonterminal String		binary_op, add_op, mul_op, unary_op;
 
-nonterminal		type, type_name, type_lit;
-nonterminal 	array_type, slice_type, element_type;
-nonterminal 	struct_type, field_decl, field_decl_grp, field_decl_st;
-nonterminal 	anonymous_field;
-nonterminal		tag;
-							
-nonterminal 	array_length;
+nonterminal String		type, type_name, type_lit;
 
-nonterminal 	function_decl, func_sign_grp, function_name, function, function_body,
+nonterminal String 	function_decl, func_sign_grp, function_name, function, function_body,
 							block;
-nonterminal 	function_type, signature, parameters, parameter_list,
+nonterminal String 	function_type, signature, parameters, parameter_list,
 							result, parameter_decl, parameter_decl_st;
 
-nonterminal 	method_decl, method_expr, method_name, receiver, receiver_type;
+nonterminal String 	method_decl, method_name, receiver;
 
-nonterminal 	expression, expression_list,
-							expression_st, unary_expr, primary_expr, selector, index,
-							slice, arguments;
-nonterminal 	operand, literal, operand_name, qualified_ident;
-nonterminal 	basic_lit, composite_lit, function_lit;
-nonterminal 	literal_type, literal_value;
-nonterminal 	element_list, keyed_element, keyed_element_st;
-nonterminal 	key, element, field_name;
+nonterminal String 	expression, expression_list,
+							expression_st, unary_expr, primary_expr, selector, arguments;
+nonterminal String 	operand, literal, operand_name, qualified_ident;
+nonterminal String 	basic_lit, function_lit;
 
 /* Statement ********************************************************/
-nonterminal 	statement, statement_st, statement_list;
-nonterminal 	simple_stmt, expression_stmt, inc_dec_stmt,
+nonterminal String 	statement, statement_st, statement_list;
+nonterminal String 	simple_stmt, expression_stmt, inc_dec_stmt,
 							inc_dec_stmt_grp, assignment, assign_op;
-nonterminal 	return_stmt, break_stmt;
-nonterminal 	if_stmt, else_if_block_grp;
-nonterminal 	switch_stmt, expr_switch_stmt, expr_case_clause, expr_case_clause_st,
+nonterminal String 	return_stmt, break_stmt;
+nonterminal String 	if_stmt, else_if_block_grp;
+nonterminal String 	switch_stmt, expr_switch_stmt, expr_case_clause, expr_case_clause_st,
 							expr_switch_case;
-nonterminal 	for_stmt, condition, for_clause,
+nonterminal String 	for_stmt, condition, for_clause,
 							init_stmt, post_stmt;
 /********************************************************************/
 
@@ -107,12 +102,14 @@ start with source_file;
 /* The grammar */
 
 /* Source file ******************************************************/
-source_file 		::= package_clause import_decl_st top_level_decl_st
-										| package_clause SEMI_COLON import_decl_st top_level_decl_st
-										;
-import_decl_st	::= import_decl import_decl_st
-										| import_decl SEMI_COLON import_decl_st
-										|
+source_file 		::= package_clause import_decl_st top_level_decl_st:top
+                    {:
+                      parser.output = top;
+                    :}
+										| package_clause SEMI_COLON import_decl_st top_level_decl_st:top
+                    {:
+                      parser.output = top;
+                    :}
 										;
 /********************************************************************/
 
@@ -126,6 +123,10 @@ import_decl 		 ::= IMPORT import_decl_grp;
 import_decl_grp	 ::= import_spec
 										 | OPEN_PARAN import_spec_st CLOSE_PARAN
 										 ;
+import_decl_st	::= import_decl import_decl_st
+										| import_decl SEMI_COLON import_decl_st
+										|
+										;
 import_spec 		 ::= DOT import_path
 										 | package_name import_path
 										 | import_path
@@ -140,40 +141,72 @@ import_path 		 ::= STRING_LIT;
 
 /* Top Level Declaration ********************************************/
 
-top_level_decl		::= declaration
-											| function_decl
-											| function_decl SEMI_COLON
-											| method_decl
-											| method_decl 	SEMI_COLON
+top_level_decl		::= declaration:d
+                      {:
+                        RESULT = d;
+                      :}
+											| function_decl:f
+                      {:
+                        RESULT = f;
+                      :}
+											| function_decl:f SEMI_COLON
+                      {:
+                        RESULT = f;
+                      :}
+											| method_decl:m
+                      {:
+                        RESULT = m;
+                      :}
+											| method_decl:m 	SEMI_COLON
+                      {:
+                        RESULT = m;
+                      :}
 											;
-top_level_decl_st ::= top_level_decl top_level_decl_st
+top_level_decl_st ::= top_level_decl:top top_level_decl_st:top_st
+                      {:
+                        RESULT = top + top_st;
+                      :}
 											|
 											;
 
 /* Declaration ******************************************************/
-declaration 					::= const_decl 	SEMI_COLON
-													| type_decl
-													| type_decl SEMI_COLON
+declaration 					::= const_decl:c 	SEMI_COLON
+                          {:
+                            RESULT = c;
+                          :}
 													| var_decl 	SEMI_COLON
 													;
 
-const_decl 						::= CONST const_decl_grp;
-const_decl_grp				::= const_spec
-													| OPEN_PARAN const_spec_st CLOSE_PARAN
+const_decl 						::= CONST const_decl_grp:c_grp
+                          {:
+                            RESULT = c_grp;
+                          :};
+const_decl_grp				::= const_spec:c
+                          {:
+                            RESULT = c;
+                          :}
+													| OPEN_PARAN const_spec_st:c_st CLOSE_PARAN
+                          {:
+                            RESULT = c_st;
+                          :}
 													;
-const_spec 						::= IDENTIFIER 
-													| IDENTIFIER EQUAL expression
-													| IDENTIFIER type EQUAL expression
+const_spec 						::= IDENTIFIER:id
+                          {:
+                            RESULT = id;
+                          :}
+													| IDENTIFIER:id EQUAL expression:e
+                          {:
+                            RESULT = id + " = " + e;
+                          :}
+													| IDENTIFIER:id type EQUAL expression:e
+                          {:
+                            RESULT = id + " = " + e;
+                          :}
 													;
-const_spec_st 				::= const_spec SEMI_COLON const_spec_st
-													|
-													;
-type_decl 						::= TYPE type_decl_gr;
-type_decl_gr 					::= type_spec
-													| OPEN_PARAN type_spec_st CLOSE_PARAN
-													;
-type_spec 						::= IDENTIFIER type;
-type_spec_st 					::= type_spec SEMI_COLON type_spec_st
+const_spec_st 				::= const_spec:c SEMI_COLON const_spec_st:c_st
+                          {:
+                            RESULT = c + c_st;
+                          :}
 													|
 													;
 var_decl 							::= VAR var_decl_grp;
@@ -195,23 +228,70 @@ identifier_st 				::= COMMA IDENTIFIER identifier_st
 													|
 													;
 /* Function *********************************************************/
-function_decl 				::= FUNC function_name func_sign_grp;
-func_sign_grp 				::= function
-													| signature
+function_decl 				::= FUNC function_name:name func_sign_grp:f_grp
+                          {:
+                            RESULT = "\n" + name + ":" + "\nbegin_func;" + f_grp + "\nend_func;";
+                          :}
+                          ;
+func_sign_grp 				::= function:f
+                          {:
+                            RESULT = f;
+                          :}
+													| signature:s
+                          {:
+                            RESULT = s;
+                          :}
 													;
-function_name 				::= IDENTIFIER;
-function 							::= signature function_body;
-function_body 				::= block;
+function_name 				::= IDENTIFIER:id
+                          {:
+                            RESULT = id;
+                          :}
+                          ;
+function 							::= signature function_body:fb
+                          {:
+                            RESULT = fb;
+                          :}
+                          ;
+function_body 				::= block:b
+                          {:
+                            RESULT = b;
+                          :}
+                          ;
 /* Method ***********************************************************/
-method_decl 					::= FUNC receiver method_name func_sign_grp;
-receiver 							::= parameters;
-method_name					 	::= IDENTIFIER;
+method_decl 					::= FUNC receiver method_name func_sign_grp
+                          {:
+                            System.out.println("METHO");
+                          :}
+                          ;
+receiver 							::= parameters
+                          {:
+                            System.out.println("PARAMS");
+                          :}
+                          ;
+method_name					 	::= IDENTIFIER:id
+                          {:
+                            System.out.println(id);
+                          :}
+                          ;
 /* Block ************************************************************/
-block 								::= OPEN_CURLY statement_list CLOSE_CURLY;
+block 								::= OPEN_CURLY statement_list:st CLOSE_CURLY
+                          {:
+                            RESULT = st;
+                          :}
+                          ;
 /* Statement ********************************************************/
-statement 						::= declaration
-													| simple_stmt SEMI_COLON
-													| return_stmt SEMI_COLON
+statement 						::= declaration:d
+                          {:
+                            RESULT = "\n" + d;
+                          :}
+													| simple_stmt:s SEMI_COLON
+                          {:
+                            RESULT = "\n" + s;
+                          :}
+													| return_stmt:r SEMI_COLON
+                          {:
+                            RESULT = "\n" + r;
+                          :}
 													| break_stmt 	SEMI_COLON
 													| block
 													| block 			SEMI_COLON
@@ -222,16 +302,37 @@ statement 						::= declaration
 													| for_stmt
 													| for_stmt 		SEMI_COLON
 													;
-statement_list 				::= statement_st;
-statement_st 					::= statement statement_st
+statement_list 				::= statement_st:st_st
+                          {:
+                            RESULT = st_st;
+                          :}
+                          ;
+statement_st 					::= statement:st statement_st:st_st
+                          {:
+                            RESULT = st + st_st;
+                          :}
 													|
 													;
-simple_stmt 					::= expression_stmt
+simple_stmt 					::= expression_stmt:e
+                          {:
+                            System.out.println("EXPR");
+                            RESULT = e;
+                          :}
 													| inc_dec_stmt
 													| assignment
+                          {:
+                            System.out.println("ASSIGN");
+                          :}
 													| short_var_decl
+                          {:
+                            System.out.println("SH_VAR");
+                          :}
 													;
-expression_stmt 			::= expression;
+expression_stmt 			::= expression:e
+                          {:
+                            RESULT = e;
+                          :}
+                          ;
 inc_dec_stmt 					::= expression inc_dec_stmt_grp;
 inc_dec_stmt_grp			::= INCREMENT
 													| DECREMENT
@@ -263,64 +364,37 @@ expr_case_clause 			::= expr_switch_case COLON statement_list;
 expr_case_clause_st 	::= expr_case_clause expr_case_clause_st
 													|
 													;
-expr_switch_case 			::= CASE expression_list
+expr_switch_case 			::= CASE expression
 													| DEFAULT
 													;
 /* FOR statement ****************************************************/
-for_stmt 							::= FOR block
-													| FOR condition block
-													| FOR for_clause block
+for_stmt 							::= FOR for_clause block
 													;
 condition 						::= expression;
 // for_clause 						::= init_stmt_zone SEMI_COLON condition_zone SEMI_COLON post_stmt_zone;
-for_clause 						::= SEMI_COLON SEMI_COLON
-													| SEMI_COLON SEMI_COLON post_stmt
-													| SEMI_COLON condition SEMI_COLON
-													| SEMI_COLON condition SEMI_COLON post_stmt
-													| init_stmt SEMI_COLON SEMI_COLON
-													| init_stmt SEMI_COLON SEMI_COLON post_stmt
-													| init_stmt SEMI_COLON condition SEMI_COLON
-													| init_stmt SEMI_COLON condition SEMI_COLON post_stmt
+for_clause 						::= init_stmt SEMI_COLON condition SEMI_COLON post_stmt
 													;
 init_stmt 						::= simple_stmt;
 post_stmt 						::= simple_stmt;
 /* BREAK statement **************************************************/
 break_stmt 						::= BREAK;
 /* RETURN statement *************************************************/
-return_stmt 					::= RETURN
-													| RETURN expression_list
+return_stmt 					::= RETURN:r
+                          {:
+                            RESULT = r;
+                          :}
+													| RETURN:r expression_list
+                          {:
+                            RESULT = r;
+                          :}
 													;
 /********************************************************************/
 
 /* Type *************************************************************/
 type 					::= type_name | type_lit;
-// type_zone 		::= type
-// 									|
-// 									;
 type_name 		::= IDENTIFIER;
-type_lit			::= array_type
-									| struct_type
-									| function_type
-									| slice_type
+type_lit			::= function_type
 									;
-array_type				::= OPEN_SQUARE array_length CLOSE_SQUARE element_type;
-array_length 			::= expression;
-element_type			::= type;
-slice_type 				::= OPEN_SQUARE CLOSE_SQUARE element_type;
-struct_type 			::= STRUCT OPEN_CURLY field_decl_st CLOSE_CURLY;
-field_decl 				::= field_decl_grp
-											| field_decl_grp tag
-											;
-field_decl_grp		::= identifier_list type
-											| anonymous_field
-											;
-field_decl_st 		::= field_decl SEMI_COLON field_decl_st
-											|
-											;
-anonymous_field 	::= type_name
-											| ASTRISK type_name
-											;
-tag 							::= STRING_LIT;
 /* Function *********************************************************/
 function_type 				::= FUNC signature;
 signature 						::= parameters
@@ -342,107 +416,166 @@ parameter_decl_st			::= COMMA parameter_decl parameter_decl_st
 /********************************************************************/
 
 /* Expression *******************************************************/
-expression		 				::= unary_expr
+expression		 				::= unary_expr:un_exp
+                          {:
+                            RESULT = un_exp;
+                          :}
 													| expression binary_op expression
 													;
 expression_list 			::= expression expression_st;
 expression_st 				::= COMMA expression expression_st
 													|
 													;
-unary_expr 						::= primary_expr
+unary_expr 						::= primary_expr:p_exp
+                          {:
+                            RESULT = p_exp;
+                          :}
 													| unary_op unary_expr
 													;
-primary_expr					::= operand
+primary_expr					::= operand:op
+                          {:
+                            RESULT = op;
+                          :}
 													| primary_expr selector
-													| primary_expr index
-													| primary_expr slice
-													| primary_expr arguments 
+													| primary_expr:p arguments
+                          {:
+                            RESULT = parser.newVar() + " = " + "call " + p + "\n" + "pop_params;";
+                          :}
 													;
-operand 							::= literal
-													| operand_name
-													| method_expr
+operand 							::= literal:lit
+                          {:
+                            RESULT = lit;
+                          :}
+													| operand_name:op
+                          {:
+                            RESULT = op;
+                          :}
 													| OPEN_PARAN expression CLOSE_PARAN
 													;
-literal 							::= basic_lit
-													| composite_lit
+literal 							::= basic_lit:b_lit
+                          {:
+                            RESULT = b_lit;
+                          :}
 													| function_lit
 													;
-basic_lit 						::= INT_LIT
-													| STRING_LIT
-													;
-composite_lit 				::= literal_type literal_value
-													;
-literal_type					::= struct_type
-													| array_type
-													| OPEN_SQUARE CDOTS CLOSE_SQUARE element_type
-													| slice_type
-													| TYPE type_name
-													;
-literal_value 				::= OPEN_CURLY CLOSE_CURLY
-													| OPEN_CURLY element_list CLOSE_CURLY
-													;
-element_list 					::= keyed_element keyed_element_st;
-key 									::= field_name
-													| literal_value
-													;
-keyed_element 				::= element
-													| key COLON element
-													;
-keyed_element_st 			::= COMMA keyed_element keyed_element_st
-													|
-													;
-field_name 						::= IDENTIFIER;
-element 							::= expression
-													| literal_value
+basic_lit 						::= INT_LIT:i
+                          {:
+                            RESULT = i;
+                          :}
+													| STRING_LIT:s
+                          {:
+                            RESULT = s;
+                          :}
 													;
 function_lit 					::= FUNC function;
 selector 							::= DOT IDENTIFIER;
-index									::= OPEN_SQUARE expression CLOSE_SQUARE;
-slice 								::= OPEN_SQUARE COLON CLOSE_SQUARE
-													| OPEN_SQUARE COLON expression CLOSE_SQUARE
-													| OPEN_SQUARE expression COLON CLOSE_SQUARE
-													| OPEN_SQUARE expression COLON expression CLOSE_SQUARE
-													| OPEN_SQUARE COLON expression COLON expression CLOSE_SQUARE
-													| OPEN_SQUARE expression COLON expression COLON expression CLOSE_SQUARE
-													;
 arguments 						::= OPEN_PARAN CLOSE_PARAN
-													| OPEN_PARAN expression_list CLOSE_PARAN
-													| OPEN_PARAN TYPE type COMMA expression_list CLOSE_PARAN
+                          {:
+                            RESULT = "";
+                          :}
+													| OPEN_PARAN expression_list:el CLOSE_PARAN
+                          {:
+                          :}
 													;
-operand_name 					::= IDENTIFIER
-													| qualified_ident
+operand_name 					::= IDENTIFIER:id
+                          {:
+                            RESULT = id;
+                          :}
+													| qualified_ident:id
+                          {:
+                            RESULT = id;
+                          :}
 													;
-qualified_ident 			::= DOT package_name DOT IDENTIFIER;
-/* Method ***********************************************************/
-method_expr 					::= DOT receiver_type DOT method_name;
-receiver_type 				::= OPEN_PARAN ASTRISK type_name CLOSE_PARAN
-													| OPEN_PARAN type_name CLOSE_PARAN
-													;
+qualified_ident 			::= DOT package_name DOT IDENTIFIER:id
+                          {:
+                            RESULT = id;
+                          :}
+                          ;
 /********************************************************************/
 
 /* Operators ********************************************************/
-binary_op ::= OR_OP
-							| AND_OP
-							| REL_OP
-							| add_op
-							| mul_op
+binary_op ::= OR_OP:op
+              {:
+                RESULT = op;
+              :}
+							| AND_OP:op
+              {:
+                RESULT = op;
+              :}
+							| REL_OP:op
+              {:
+                RESULT = op;
+              :}
+							| add_op:op
+              {:
+                RESULT = op;
+              :}
+							| mul_op:op
+              {:
+                RESULT = op;
+              :}
 							;
-add_op ::=		PLUS
-							| MINUS
-							| BAR
+add_op ::=		PLUS:op
+              {:
+                RESULT = op;
+              :}
+							| MINUS:op
+              {:
+                RESULT = op;
+              :}
+							| BAR:op
+              {:
+                RESULT = op;
+              :}
 							;
-mul_op ::=		ASTRISK
-							| SLASH
-							| PERCENT
-							| SHIFT_LEFT
-							| SHIFT_RIGHT
-							| AMBERSAND
+mul_op ::=		ASTRISK:op
+              {:
+                RESULT = op;
+              :}
+							| SLASH:op
+              {:
+                RESULT = op;
+              :}
+							| PERCENT:op
+              {:
+                RESULT = op;
+              :}
+							| SHIFT_LEFT:op
+              {:
+                RESULT = op;
+              :}
+							| SHIFT_RIGHT:op
+              {:
+                RESULT = op;
+              :}
+							| AMBERSAND:op
+              {:
+                RESULT = op;
+              :}
 							;
-unary_op ::=  PLUS
-							| MINUS
-							| EXCLAMATION
-							| ASTRISK
-							| AMBERSAND
-							| LESS_DASH
+unary_op ::=  PLUS:op
+              {:
+                RESULT = op;
+              :}
+							| MINUS:op
+              {:
+                RESULT = op;
+              :}
+							| EXCLAMATION:op
+              {:
+                RESULT = op;
+              :}
+							| ASTRISK:op
+              {:
+                RESULT = op;
+              :}
+							| AMBERSAND:op
+              {:
+                RESULT = op;
+              :}
+							| LESS_DASH:op
+              {:
+                RESULT = op;
+              :}
 							;
 /********************************************************************/

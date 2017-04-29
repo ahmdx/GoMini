@@ -1,13 +1,42 @@
-
 import java.lang.System;
 import java.io.*;
 import java_cup.runtime.Symbol;
-%%
-%class Lexer
 
-%implements java_cup.runtime.Scanner
-%function next_token
-%type java_cup.runtime.Symbol
+class Lexer {
+
+	Yylex tokenizer;
+	public Lexer(BufferedReader bis)
+	{
+	  try
+	  {
+	  tokenizer=new Yylex(bis);
+	  }
+	  catch(Exception e)
+	  {
+
+	  }
+	}
+	public Symbol next_token()
+	{
+		Symbol next=null;
+		try
+		{
+		 next= tokenizer.next_token();
+		}
+		catch(Exception e)
+		{
+		}
+		return next;
+	}
+	}
+
+
+%%
+
+
+%function getToken
+%cup
+%type Symbol
 %char
 %line
 
@@ -23,61 +52,125 @@ import java_cup.runtime.Symbol;
 
 %init}
 
-%state DOC
-
 %eofval{
-	return new Symbol(sym.EOF, null);
+//Add code to be executed when the end of the file is reached
+	return (new Symbol(sym.EOF, "Done"));
 %eofval}
 
+%state SCOPED
 
-ALPHA = [a-zA-Z]
-ALPHA_ = [a-zA-Z_]
-ALPHANUM = [a-zA-Z0-9]
-ALPHANUM_ = [a-zA-Z0-9_]
-WHITESPACE=([\n\r ]+)
-NEWLINE=(\\\\)
+DIGIT=([0-9])
+DIGITS=({DIGIT}+)
+LETTER=([a-zA-Z])
+LETTER_=({LETTER}|{UNDERSCORE})
+LETTERS=({LETTER}+)
+UNDERSCORE=(_)
 
-START=(\\documentclass\{(.)+\})
-PACKAGE=(\\usepackage\[(.)+\]\{(.)+\})
-COMMENT=(\%(.)*)
+IDENTIFIER=({LETTER_}({LETTER_}|{DIGIT})*)
+STRING_LIT=(\"(\\\"|[^\"\n])*\"|\`(\\\"|[^\`])*\`)
+EQUAL=(=)
+PACKAGE=(package)
+IMPORT=(import)
+CONST=(const)
+FUNC=(func)
+BREAK=(break)
+SWITCH=(switch)
+DEFAULT=(default)
+CASE=(case)
+TYPE=(type)
+STRUCT=(struct)
+OPEN_CURLY=(\{)
+CLOSE_CURLY=(\})
+OPEN_PARAN=(\()
+CLOSE_PARAN=(\))
+OPEN_SQUARE=(\[)
+CLOSE_SQUARE=(\])
+VAR=(var)
+FOR=(for)
+RETURN=(return)
+IF=(if)
+ELSE=(else)
+AND_OP=(&&)
+OR_OP=(\|\|)
+REL_OP=((==|!=|>|>=|<|<=))
+COLON=(:)
+COLON_EQUAL=(:=)
+SEMI_COLON=(;)
+DOT=(\.)
+ASTRISK=(\*)
+COMMA=(,)
+PERCENT=(%)
+EXCLAMATION=(!)
+LESS_DASH=(<-)
+BAR=(\|)
+AMBERSAND=(&)
+SLASH=(/)
+PLUS=(\+)
+MINUS=(-)
+INCREMENT=(\+\+)
+DECREMENT=(--)
+CDOTS=(\.\.\.)
 
-BEGIN_DOC=(\\begin\{document\})
-END_DOC=(\\end\{document\})
+SHIFT_LEFT=(<<)
+SHIFT_RIGHT=(>>)
 
-TITLE=(\\title)
-DATE=(\\date)
-SECTION=(\\section)
-BF=(\\textbf)
-MAKE=(\\maketitle)
-TEXT=(\{(.)+\})
-BODY=(([^\n\\\{\}\%\r])+)
+NEWLINE=[\r\n|\n]
+SPACE=[ \t]
+COMMENT=(//.*)
 
-%% 
-{COMMENT} {}
-{WHITESPACE} {}
+%%
+<YYINITIAL> {PACKAGE} { return new Symbol(sym.PACKAGE, yytext()); }
+<YYINITIAL> {IMPORT} { return new Symbol(sym.IMPORT, yytext()); }
 
+<YYINITIAL, SCOPED> {IF} { return new Symbol(sym.IF, yytext()); }
+<YYINITIAL, SCOPED> {ELSE} { return new Symbol(sym.ELSE, yytext()); }
+<YYINITIAL, SCOPED> {COLON_EQUAL} { return new Symbol(sym.COLON_EQUAL, yytext()); }
+<YYINITIAL, SCOPED> {COLON} { return new Symbol(sym.COLON, yytext()); }
+<YYINITIAL, SCOPED> {BREAK} { return new Symbol(sym.BREAK, yytext()); }
+<YYINITIAL, SCOPED> {SWITCH} { return new Symbol(sym.SWITCH, yytext()); }
+<YYINITIAL, SCOPED> {CASE} { return new Symbol(sym.CASE, yytext()); }
+<YYINITIAL, SCOPED> {DEFAULT} { return new Symbol(sym.DEFAULT, yytext()); }
+<YYINITIAL, SCOPED> {FOR} { return new Symbol(sym.FOR, yytext()); }
+<YYINITIAL, SCOPED> {INCREMENT} { return new Symbol(sym.INCREMENT, yytext()); }
+<YYINITIAL, SCOPED> {DECREMENT} { return new Symbol(sym.DECREMENT, yytext()); }
+<YYINITIAL, SCOPED> {RETURN} { return new Symbol(sym.RETURN, yytext()); }
 
+<YYINITIAL, SCOPED> {PLUS} { return new Symbol(sym.PLUS, yytext()); }
+<YYINITIAL, SCOPED> {MINUS} { return new Symbol(sym.MINUS, yytext()); }
 
-<YYINITIAL> {START} { return (new Symbol(sym.DOC_CLASS,yytext()));}
-<YYINITIAL> {PACKAGE} { return (new Symbol(sym.PACKAGE,yytext()));}
+<YYINITIAL, SCOPED> {CONST} { return new Symbol(sym.CONST, yytext()); }
+<YYINITIAL, SCOPED> {FUNC} { return new Symbol(sym.FUNC, yytext()); }
+<YYINITIAL, SCOPED> {OPEN_CURLY} { return new Symbol(sym.OPEN_CURLY, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_CURLY} { return new Symbol(sym.CLOSE_CURLY, yytext()); }
+<YYINITIAL, SCOPED> {OPEN_PARAN} { return new Symbol(sym.OPEN_PARAN, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_PARAN} { return new Symbol(sym.CLOSE_PARAN, yytext()); }
+<YYINITIAL, SCOPED> {OPEN_SQUARE} { return new Symbol(sym.OPEN_SQUARE, yytext()); }
+<YYINITIAL, SCOPED> {CLOSE_SQUARE} { return new Symbol(sym.CLOSE_SQUARE, yytext()); }
+<YYINITIAL, SCOPED> {TYPE} { return new Symbol(sym.TYPE, yytext()); }
+<YYINITIAL, SCOPED> {STRUCT} { return new Symbol(sym.STRUCT, yytext()); }
+<YYINITIAL, SCOPED> {VAR} { return new Symbol(sym.VAR, yytext()); }
+<YYINITIAL, SCOPED> {CDOTS} { return new Symbol(sym.CDOTS, yytext()); }
+<YYINITIAL, SCOPED> {DOT} { return new Symbol(sym.DOT, yytext()); }
+<YYINITIAL, SCOPED> {ASTRISK} { return new Symbol(sym.ASTRISK, yytext()); }
+<YYINITIAL, SCOPED> {SEMI_COLON} { return new Symbol(sym.SEMI_COLON, yytext()); }
+<YYINITIAL, SCOPED> {COMMA} { return new Symbol(sym.COMMA, yytext()); }
+<YYINITIAL, SCOPED> {PERCENT} { return new Symbol(sym.PERCENT, yytext()); }
+<YYINITIAL, SCOPED> {EXCLAMATION} { return new Symbol(sym.EXCLAMATION, yytext()); }
+<YYINITIAL, SCOPED> {LESS_DASH} { return new Symbol(sym.LESS_DASH, yytext()); }
+<YYINITIAL, SCOPED> {AND_OP} { return new Symbol(sym.AND_OP, yytext()); }
+<YYINITIAL, SCOPED> {OR_OP} { return new Symbol(sym.OR_OP, yytext()); }
+<YYINITIAL, SCOPED> {REL_OP} { return new Symbol(sym.REL_OP, yytext()); }
+<YYINITIAL, SCOPED> {BAR} { return new Symbol(sym.BAR, yytext()); }
+<YYINITIAL, SCOPED> {AMBERSAND} { return new Symbol(sym.AMBERSAND, yytext()); }
+<YYINITIAL, SCOPED> {SLASH} { return new Symbol(sym.SLASH, yytext()); }
+<YYINITIAL, SCOPED> {DIGITS} { return new Symbol(sym.INT_LIT, yytext()); }
+<YYINITIAL, SCOPED> {STRING_LIT} { return new Symbol(sym.STRING_LIT, yytext()); }
+<YYINITIAL, SCOPED> {EQUAL} { return new Symbol(sym.EQUAL, yytext()); }
+<YYINITIAL, SCOPED> {SHIFT_LEFT} { return new Symbol(sym.SHIFT_LEFT, yytext()); }
+<YYINITIAL, SCOPED> {SHIFT_RIGHT} { return new Symbol(sym.SHIFT_RIGHT, yytext()); }
+<YYINITIAL, SCOPED> {IDENTIFIER} { return new Symbol(sym.IDENTIFIER, yytext()); }
+<YYINITIAL, SCOPED> {NEWLINE} {}
+<YYINITIAL, SCOPED> {SPACE} {}
+<YYINITIAL, SCOPED> {COMMENT} {}
 
-<YYINITIAL> {BEGIN_DOC} { 
-	yybegin(DOC);
-	return (new Symbol(sym.BEGIN_DOC, yytext()));
-}
-<DOC> 		{END_DOC} {
-	yybegin(YYINITIAL);
-	return (new Symbol(sym.END_DOC, yytext()));
-}
-
-
-
-<DOC> 		{TITLE} { return (new Symbol(sym.TITLE,yytext()));}
-<DOC> 		{DATE} { return (new Symbol(sym.DATE,yytext()));}
-<DOC> 		{SECTION} { return (new Symbol(sym.SECTION,yytext()));}
-<DOC> 		{BF} { return (new Symbol(sym.BF,yytext()));}
-<DOC> 		{MAKE} { return (new Symbol(sym.MAKE,yytext()));}
-<DOC> 		{TEXT} { return (new Symbol(sym.TEXT,yytext()));}
-<DOC> 		{NEWLINE} { return new Symbol(sym.NEWLINE, yytext());}
-<DOC> 		{BODY} { return (new Symbol(sym.BODY,yytext()));}
-. { return new Symbol(sym.error, "Invalid input: " + yytext()); }
+<YYINITIAL, SCOPED> . { return new Symbol(sym.ERROR, "Invalid input: " + yytext().trim() + " in line " + (yyline + 1) ); }
