@@ -10,8 +10,8 @@ public class AP {
 
 	public static void main(String[] args) {
 
-		String inFile = "MS3/Go1.in";
-		String outFile = "MS3/Go1.out";
+		String inFile = "MS3/Go3.in";
+		String outFile = "MS3/Go3.out";
 
 		if (args.length > 1) {
 			inFile = args[0];
@@ -31,7 +31,9 @@ public class AP {
 				System.out.println(parser.output);
 				writer.write("Done");
 			} catch (Exception e) {
+				e.printStackTrace();
 				writer.write("ParseError");	
+				
 			}
 			
 			fis.close();

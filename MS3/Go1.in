@@ -20,6 +20,4 @@ func main() {
 
     const m = 16;
     var mShifted = m >> 2;
-
-		return;
 }

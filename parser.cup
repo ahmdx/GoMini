@@ -10,11 +10,49 @@ parser code {:
     // Connect this parser to a lexer!
     Lexer lexer;
     static String output;
+    final static String delimiter = "§";
     parser(Lexer lexer){ this.lexer=lexer; }
 
-    static int lastTempVar = 0;
+    static int lastVar = 0;
+    static int lastLabel = 0;
     static String newVar() {
-      return "t" + lastTempVar++;
+      return "t" + lastVar++;
+    }
+
+    static String newLabel() {
+      return "L" + lastLabel++;
+    }
+
+    public class SDD {
+      public String address = "";
+      public String code    = "";
+      public String label   = "";
+
+      public SDD() {}
+
+      public SDD(String code) {
+        this.code = code;
+      }
+
+      public SDD(SDD sdd) {
+        this.address = sdd.address;
+        this.code    = sdd.code;
+      }
+
+      public SDD(String address, String code) {
+        this.address = address;
+        this.code    = code;
+      }
+
+      public SDD(String address, String code, String label) {
+        this.address = address;
+        this.code    = code;
+        this.label   = label;
+      }
+
+      public String toString() {
+        return this.code;
+      }
     }
 :};
 
@@ -43,44 +81,44 @@ terminal String			DOT, COMMA, SEMI_COLON, PERCENT, EXCLAMATION, ASTRISK,
 							CLOSE_SQUARE, CDOTS;
 
 /* Non-terminals */
-nonterminal String		source_file, import_decl_st;
-nonterminal String		package_clause, package_name;
-nonterminal String		import_decl, import_decl_grp, import_spec_st,
+nonterminal SDD		source_file, import_decl_st;
+nonterminal SDD		package_clause, package_name;
+nonterminal SDD		import_decl, import_decl_grp, import_spec_st,
 							import_spec, import_path;
 
-nonterminal String		top_level_decl, top_level_decl_st;
-nonterminal String		declaration;
+nonterminal SDD		top_level_decl, top_level_decl_st;
+nonterminal SDD		declaration;
 
-nonterminal String 	const_decl, const_decl_grp, const_spec, const_spec_st;
-nonterminal String 	var_decl, var_decl_grp, var_spec, var_spec_grp, var_spec_st,
+nonterminal SDD 	const_decl, const_decl_grp, const_spec, const_spec_st;
+nonterminal SDD 	var_decl, var_decl_grp, var_spec, var_spec_grp, var_spec_st,
 							short_var_decl;
-nonterminal String 	identifier_list, identifier_st;
+nonterminal SDD 	identifier_list, identifier_st;
 
-nonterminal String		binary_op, add_op, mul_op, unary_op;
+nonterminal SDD		binary_op, add_op, mul_op, unary_op;
 
-nonterminal String		type, type_name, type_lit;
+nonterminal SDD		type, type_name, type_lit;
 
-nonterminal String 	function_decl, func_sign_grp, function_name, function, function_body,
+nonterminal SDD 	function_decl, func_sign_grp, function_name, function, function_body,
 							block;
-nonterminal String 	function_type, signature, parameters, parameter_list,
+nonterminal SDD 	function_type, signature, parameters, parameter_list,
 							result, parameter_decl, parameter_decl_st;
 
-nonterminal String 	method_decl, method_name, receiver;
+nonterminal SDD 	method_decl, method_name, receiver;
 
-nonterminal String 	expression, expression_list,
+nonterminal SDD 	expression, expression_list,
 							expression_st, unary_expr, primary_expr, selector, arguments;
-nonterminal String 	operand, literal, operand_name, qualified_ident;
-nonterminal String 	basic_lit, function_lit;
+nonterminal SDD 	operand, literal, operand_name, qualified_ident;
+nonterminal SDD 	basic_lit, function_lit;
 
 /* Statement ********************************************************/
-nonterminal String 	statement, statement_st, statement_list;
-nonterminal String 	simple_stmt, expression_stmt, inc_dec_stmt,
+nonterminal SDD 	statement, statement_st, statement_list;
+nonterminal SDD 	simple_stmt, expression_stmt, inc_dec_stmt,
 							inc_dec_stmt_grp, assignment, assign_op;
-nonterminal String 	return_stmt, break_stmt;
-nonterminal String 	if_stmt, else_if_block_grp;
-nonterminal String 	switch_stmt, expr_switch_stmt, expr_case_clause, expr_case_clause_st,
+nonterminal SDD 	return_stmt, break_stmt;
+nonterminal SDD 	if_stmt, else_if_block_grp;
+nonterminal SDD 	switch_stmt, expr_switch_stmt, expr_case_clause, expr_case_clause_st,
 							expr_switch_case;
-nonterminal String 	for_stmt, condition, for_clause,
+nonterminal SDD 	for_stmt, condition, for_clause,
 							init_stmt, post_stmt;
 /********************************************************************/
 
@@ -93,7 +131,7 @@ precedence left 	AMBERSAND;
 precedence left 	REL_OP;
 precedence left 	SHIFT_LEFT, SHIFT_RIGHT;
 precedence left 	PLUS, MINUS;
-precedence right 	PLUS, MINUS, EXCLAMATION, INCREMENT, DECREMENT;
+precedence right 	EXCLAMATION, INCREMENT, DECREMENT;
 precedence left 	ASTRISK, SLASH, PERCENT;
 precedence left 	OPEN_PARAN, CLOSE_PARAN, DOT, INCREMENT, DECREMENT;
 
@@ -104,18 +142,26 @@ start with source_file;
 /* Source file ******************************************************/
 source_file 		::= package_clause import_decl_st top_level_decl_st:top
                     {:
-                      parser.output = top;
+                      parser.output = top.code;
                     :}
 										| package_clause SEMI_COLON import_decl_st top_level_decl_st:top
                     {:
-                      parser.output = top;
+                      parser.output = top.code;
                     :}
 										;
 /********************************************************************/
 
 /* Package declaration **********************************************/
-package_clause ::= PACKAGE package_name;
-package_name	 ::= IDENTIFIER;
+package_clause ::= PACKAGE package_name
+                   {:
+                     RESULT = new SDD();
+                   :}
+                   ;
+package_name	 ::= IDENTIFIER
+                  {:
+                    RESULT = new SDD();
+                  :}
+                   ;
 /********************************************************************/
 
 /* Import declaration ***********************************************/
@@ -126,6 +172,9 @@ import_decl_grp	 ::= import_spec
 import_decl_st	::= import_decl import_decl_st
 										| import_decl SEMI_COLON import_decl_st
 										|
+                    {:
+                      RESULT = new SDD();
+                    :}
 										;
 import_spec 		 ::= DOT import_path
 										 | package_name import_path
@@ -135,6 +184,9 @@ import_spec 		 ::= DOT import_path
 import_spec_st 	 ::= import_spec import_spec_st
 										 | import_spec SEMI_COLON import_spec_st
 										 |
+                     {:
+                       RESULT = new SDD();
+                     :}
 										 ;
 import_path 		 ::= STRING_LIT;
 /********************************************************************/
@@ -143,439 +195,923 @@ import_path 		 ::= STRING_LIT;
 
 top_level_decl		::= declaration:d
                       {:
-                        RESULT = d;
+                        RESULT = new SDD(d.code);
                       :}
 											| function_decl:f
                       {:
-                        RESULT = f;
+                        RESULT = new SDD(f.code);
                       :}
 											| function_decl:f SEMI_COLON
                       {:
-                        RESULT = f;
+                        RESULT = new SDD(f.code);
                       :}
 											| method_decl:m
                       {:
-                        RESULT = m;
+                        RESULT = new SDD(m.code);
                       :}
 											| method_decl:m 	SEMI_COLON
                       {:
-                        RESULT = m;
+                        RESULT = new SDD(m.code);
                       :}
 											;
 top_level_decl_st ::= top_level_decl:top top_level_decl_st:top_st
                       {:
-                        RESULT = top + top_st;
+                        RESULT = new SDD(top.code + top_st.code);
                       :}
 											|
+                      {:
+                        RESULT = new SDD();
+                      :}
 											;
 
 /* Declaration ******************************************************/
 declaration 					::= const_decl:c 	SEMI_COLON
                           {:
-                            RESULT = c;
+                            RESULT = new SDD(c.code);
                           :}
-													| var_decl 	SEMI_COLON
+													| var_decl:v 	SEMI_COLON
+                          {:
+                            RESULT = new SDD(v.code);
+                          :}
 													;
 
 const_decl 						::= CONST const_decl_grp:c_grp
                           {:
-                            RESULT = c_grp;
+                            RESULT = new SDD(c_grp.code);
                           :};
 const_decl_grp				::= const_spec:c
                           {:
-                            RESULT = c;
+                            RESULT = new SDD(c.code);
                           :}
 													| OPEN_PARAN const_spec_st:c_st CLOSE_PARAN
                           {:
-                            RESULT = c_st;
+                            RESULT = new SDD(c_st.code);
                           :}
 													;
 const_spec 						::= IDENTIFIER:id
                           {:
-                            RESULT = id;
+                            RESULT = new SDD(id);
                           :}
 													| IDENTIFIER:id EQUAL expression:e
                           {:
-                            RESULT = id + " = " + e;
+                            RESULT = new SDD(id + " = " + e.code);
                           :}
 													| IDENTIFIER:id type EQUAL expression:e
                           {:
-                            RESULT = id + " = " + e;
+                            RESULT = new SDD(id + " = " + e.code);
                           :}
 													;
 const_spec_st 				::= const_spec:c SEMI_COLON const_spec_st:c_st
                           {:
-                            RESULT = c + c_st;
+                            RESULT = new SDD(c_st.code + c.code);
                           :}
 													|
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
-var_decl 							::= VAR var_decl_grp;
-var_decl_grp 					::= var_spec
-													| OPEN_PARAN var_spec_st CLOSE_PARAN
+var_decl 							::= VAR var_decl_grp:v_grp
+                          {:
+                            RESULT = new SDD(v_grp.code);
+                          :}
+                          ;
+var_decl_grp 					::= var_spec:v
+                          {:
+                            RESULT = new SDD(v.code);
+                          :}
+													| OPEN_PARAN var_spec_st:v_st CLOSE_PARAN
+                          {:
+                            RESULT = new SDD(v_st.code);
+                          :}
 													;
-var_spec 							::= IDENTIFIER var_spec_grp;
-var_spec_grp 					::= type
-													| type EQUAL expression
-													| EQUAL expression
+var_spec 							::=
+                          // IDENTIFIER:id var_spec_grp:v_grp
+                          // {:
+                          //   RESULT = new SDD(id + v_grp.code);
+                          // :}
+                          // |
+                          IDENTIFIER:id type
+                          {:
+                            RESULT = new SDD(id);
+                          :}
+                          | IDENTIFIER:id type EQUAL expression:e
+                          {:
+                            if (e.address.length() > 0) {
+                              RESULT = new SDD(e.code + "\n" + id + " = " + e.address);
+                            } else {
+                              RESULT = new SDD(id + " = " + e.code);
+                            }
+                          :}
+                          | IDENTIFIER:id EQUAL expression:e
+                          {:
+                            if (e.address.length() > 0) {
+                              RESULT = new SDD(e.code + "\n" + id + " = " + e.address);
+                            } else {
+                              RESULT = new SDD(id + " = " + e.code);
+                            }
+                          :}
+                          ;
+// var_spec_grp 					::= type
+//                           {:
+//                             RESULT = new SDD();
+//                           :}
+// 													| type EQUAL expression:e
+//                           {:
+//                             RESULT = new SDD(" = " + e.address + " " + e.code);
+//                           :}
+// 													| EQUAL expression:e
+//                           {:
+//                             RESULT = new SDD(" = " + e.address + " " + e.code);
+//                           :}
+// 													;
+var_spec_st 					::= var_spec:v SEMI_COLON var_spec_st:v_st
+                          {:
+                            String res = v_st.code + v.code;
+                            RESULT = new SDD(res);
+                          :}
 													|
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
-var_spec_st 					::= var_spec SEMI_COLON var_spec_st
-													|
-													;
-short_var_decl 				::= identifier_list COLON_EQUAL expression;
-identifier_list 			::= IDENTIFIER identifier_st;
-identifier_st 				::= COMMA IDENTIFIER identifier_st
-													|
+short_var_decl 				::= identifier_list:id COLON_EQUAL expression:e
+                          {:
+                            if (e.address.length() > 0) {
+                              RESULT = new SDD(e.code + "\n" + id.code + " = " + e.address);
+                            } else {
+                              RESULT = new SDD(id.code + " = " + e.code);
+                            }
+                          :}
+                          ;
+identifier_list 			::= IDENTIFIER:id identifier_st:id_st
+                          {:
+                            RESULT = new SDD(id + id_st.code);
+                          :}
+;
+identifier_st 				::= COMMA IDENTIFIER:id identifier_st:id_st
+                          {:
+                            String res = id_st.code + "," + id;
+                            RESULT = new SDD(res);
+                          :}
+                          |
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 /* Function *********************************************************/
 function_decl 				::= FUNC function_name:name func_sign_grp:f_grp
                           {:
-                            RESULT = "\n" + name + ":" + "\nbegin_func;" + f_grp + "\nend_func;";
+                            RESULT = new SDD("\n" + name.code + ":" + "\nbegin_func;" + f_grp.code + "\nend_func;");
                           :}
                           ;
 func_sign_grp 				::= function:f
                           {:
-                            RESULT = f;
+                            RESULT = new SDD(f.code);
                           :}
 													| signature:s
                           {:
-                            RESULT = s;
+                            RESULT = new SDD(s.code);
                           :}
 													;
 function_name 				::= IDENTIFIER:id
                           {:
-                            RESULT = id;
+                            RESULT = new SDD(id);
                           :}
                           ;
 function 							::= signature function_body:fb
                           {:
-                            RESULT = fb;
+                            RESULT = new SDD(fb.code);
                           :}
                           ;
 function_body 				::= block:b
                           {:
-                            RESULT = b;
+                            RESULT = new SDD(b.code);
                           :}
                           ;
 /* Method ***********************************************************/
 method_decl 					::= FUNC receiver method_name func_sign_grp
                           {:
                             System.out.println("METHO");
+                            RESULT = new SDD();
                           :}
                           ;
 receiver 							::= parameters
                           {:
                             System.out.println("PARAMS");
+                            RESULT = new SDD();
                           :}
                           ;
 method_name					 	::= IDENTIFIER:id
                           {:
-                            System.out.println(id);
+                            RESULT = new SDD(id);
                           :}
                           ;
 /* Block ************************************************************/
 block 								::= OPEN_CURLY statement_list:st CLOSE_CURLY
                           {:
-                            RESULT = st;
+                            RESULT = new SDD(st);
                           :}
                           ;
 /* Statement ********************************************************/
 statement 						::= declaration:d
                           {:
-                            RESULT = "\n" + d;
+                            String newLine = (d.code.length() > 0) ? "\n" : "";
+                            RESULT = new SDD(newLine + d.code);
                           :}
 													| simple_stmt:s SEMI_COLON
                           {:
-                            RESULT = "\n" + s;
+                            String newLine = (s.code.length() > 0) ? "\n" : "";
+                            RESULT = new SDD(newLine + s.code);
                           :}
 													| return_stmt:r SEMI_COLON
                           {:
-                            RESULT = "\n" + r;
+                            String newLine = (r.code.length() > 0) ? "\n" : "";
+                            RESULT = new SDD(newLine + r.code);
                           :}
 													| break_stmt 	SEMI_COLON
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| block
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| block 			SEMI_COLON
-													| if_stmt
-													| if_stmt 		SEMI_COLON
+                          {:
+                            RESULT = new SDD();
+                          :}
+													| if_stmt:s
+                          {:
+                            RESULT = new SDD(s.code);
+                          :}
+													| if_stmt:s		SEMI_COLON
+                          {:
+                            RESULT = new SDD(s.code);
+                          :}
 													| switch_stmt
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| switch_stmt SEMI_COLON
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| for_stmt
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| for_stmt 		SEMI_COLON
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 statement_list 				::= statement_st:st_st
                           {:
-                            RESULT = st_st;
+                            RESULT = new SDD(st_st.code);
                           :}
                           ;
 statement_st 					::= statement:st statement_st:st_st
                           {:
-                            RESULT = st + st_st;
+                            RESULT = new SDD(st.code + st_st.code);
                           :}
 													|
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 simple_stmt 					::= expression_stmt:e
                           {:
-                            System.out.println("EXPR");
-                            RESULT = e;
+                            RESULT = new SDD(e);
                           :}
 													| inc_dec_stmt
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| assignment
                           {:
-                            System.out.println("ASSIGN");
+                            RESULT = new SDD();
                           :}
-													| short_var_decl
+													| short_var_decl:sh
                           {:
-                            System.out.println("SH_VAR");
+                            RESULT = new SDD(sh);
                           :}
 													;
 expression_stmt 			::= expression:e
                           {:
-                            RESULT = e;
+                            RESULT = new SDD(e);
                           :}
                           ;
-inc_dec_stmt 					::= expression inc_dec_stmt_grp;
+inc_dec_stmt 					::= expression inc_dec_stmt_grp
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 inc_dec_stmt_grp			::= INCREMENT
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| DECREMENT
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 /* Assignment *******************************************************/
-assignment 						::= expression_list assign_op expression_list;
+assignment 						::= expression_list assign_op expression_list
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 assign_op 						::= EQUAL
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| add_op EQUAL
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| mul_op EQUAL
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 /* IF ELSE statement ************************************************/
-if_stmt 							::= IF expression block
-													| IF expression block ELSE else_if_block_grp
-													| IF simple_stmt SEMI_COLON expression block
-													| IF simple_stmt SEMI_COLON expression block ELSE else_if_block_grp
+if_stmt 							::= IF:i expression:e block:b
+                          {:
+                            String label = parser.newLabel();
+                            String label1 = parser.newLabel();
+                            RESULT = new SDD("\n" + e.code + "\n" + i + " " + e.address + " " + "Goto" + " " + label + "\n" + "Goto" + " " + label1 + "\n" + label + ":" + b.code + "\n" + label1 + ":");
+                          :}
+													| IF:i expression:e block:b ELSE else_if_block_grp:el
+                          {:
+                            String ifLabel = parser.newLabel();
+                            String elseLabel = parser.newLabel();
+                            String restLabel = parser.newLabel();
+                            RESULT = new SDD("\n" + e.code + "\n" + i + " " + e.address + " " + "Goto" + " " + ifLabel + "\n" + "Goto" + " " + elseLabel + "\n" + ifLabel + ":" + b.code + "\n" + "Goto" + " " + restLabel + "\n" + elseLabel + ":" + el.code + "\n" + restLabel + ":");
+                          :}
+													| IF:i simple_stmt:s SEMI_COLON expression:e block:b
+                          {:
+                            String label = parser.newLabel();
+                            String label1 = parser.newLabel();
+                            RESULT = new SDD("\n" + s.code + "\n" + e.code + "\n" + i + " " + e.address + " " + "Goto" + " " + label + "\n" + "Goto" + " " + label1 + "\n" + label + ":" + b.code + "\n" + label1 + ":");
+                          :}
+													| IF:i simple_stmt:s SEMI_COLON expression:e block:b ELSE else_if_block_grp:el
+                          {:
+                            String ifLabel = parser.newLabel();
+                            String elseLabel = parser.newLabel();
+                            String restLabel = parser.newLabel();
+                            RESULT = new SDD("\n" + s.code + "\n" + e.code + "\n" + i + " " + e.address + " " + "Goto" + " " + ifLabel + "\n" + "Goto" + " " + elseLabel + "\n" + ifLabel + ":" + b.code + "\n" + "Goto" + " " + restLabel + "\n" + elseLabel + ":" + el.code + "\n" + restLabel + ":");
+                          :}
 													;
-else_if_block_grp 				::= if_stmt
-													| block
+else_if_block_grp 		 ::= if_stmt:i
+                          {:
+                            RESULT = new SDD(i);
+                          :}
+													| block:b
+                          {:
+                            RESULT = new SDD(b);
+                          :}
 													;
 /* SWITCH statement *************************************************/
-switch_stmt 					::= expr_switch_stmt;
+switch_stmt 					::= expr_switch_stmt
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 // expr_switch_stmt 			::= SWITCH simple_stmt_scol_zone expression_zone OPEN_CURLY expr_case_clause_st CLOSE_CURLY;
 expr_switch_stmt 			::= SWITCH OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| SWITCH expression OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| SWITCH simple_stmt SEMI_COLON OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| SWITCH simple_stmt SEMI_COLON expression OPEN_CURLY expr_case_clause_st CLOSE_CURLY
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
-expr_case_clause 			::= expr_switch_case COLON statement_list;
+expr_case_clause 			::= expr_switch_case COLON statement_list
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 expr_case_clause_st 	::= expr_case_clause expr_case_clause_st
+                          {:
+                            RESULT = new SDD();
+                          :}
 													|
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 expr_switch_case 			::= CASE expression
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| DEFAULT
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 /* FOR statement ****************************************************/
 for_stmt 							::= FOR for_clause block
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
-condition 						::= expression;
+condition 						::= expression
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 // for_clause 						::= init_stmt_zone SEMI_COLON condition_zone SEMI_COLON post_stmt_zone;
 for_clause 						::= init_stmt SEMI_COLON condition SEMI_COLON post_stmt
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
-init_stmt 						::= simple_stmt;
-post_stmt 						::= simple_stmt;
+init_stmt 						::= simple_stmt
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
+post_stmt 						::= simple_stmt
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 /* BREAK statement **************************************************/
-break_stmt 						::= BREAK;
+break_stmt 						::= BREAK
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 /* RETURN statement *************************************************/
 return_stmt 					::= RETURN:r
                           {:
-                            RESULT = r;
+                            RESULT = new SDD(r);
                           :}
 													| RETURN:r expression_list
                           {:
-                            RESULT = r;
+                            RESULT = new SDD(r);
                           :}
 													;
 /********************************************************************/
 
 /* Type *************************************************************/
-type 					::= type_name | type_lit;
-type_name 		::= IDENTIFIER;
+type 					::= type_name
+                  {:
+                    RESULT = new SDD();
+                  :}
+                  | type_lit
+                  {:
+                    RESULT = new SDD();
+                  :}
+                  ;
+type_name 		::= IDENTIFIER
+                  {:
+                    RESULT = new SDD();
+                  :}
+                  ;
 type_lit			::= function_type
+                  {:
+                    RESULT = new SDD();
+                  :}
 									;
 /* Function *********************************************************/
-function_type 				::= FUNC signature;
+function_type 				::= FUNC signature
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 signature 						::= parameters
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| parameters result
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 result 								::= parameters
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| OPEN_PARAN type CLOSE_PARAN
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 parameters 						::= OPEN_PARAN CLOSE_PARAN
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| OPEN_PARAN parameter_list CLOSE_PARAN
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
-parameter_list 				::= parameter_decl parameter_decl_st;
+parameter_list 				::= parameter_decl parameter_decl_st
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 parameter_decl  			::= identifier_list type
+                          {:
+                            RESULT = new SDD();
+                          :}
 													| identifier_list CDOTS type
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 parameter_decl_st			::= COMMA parameter_decl parameter_decl_st
+                          {:
+                            RESULT = new SDD();
+                          :}
 													|
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 /********************************************************************/
 
 /* Expression *******************************************************/
 expression		 				::= unary_expr:un_exp
                           {:
-                            RESULT = un_exp;
+                            RESULT = new SDD(un_exp);
                           :}
-													| expression binary_op expression
+                          | expression:e1 REL_OP:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 OR_OP:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 AND_OP:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 PLUS:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 MINUS:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 ASTRISK:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+													| expression:e1 SLASH:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 PERCENT:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 SHIFT_LEFT:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 SHIFT_RIGHT:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 AMBERSAND:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          | expression:e1 EXCLAMATION:op expression:e2
+                          {:
+                            String temp = parser.newVar();
+                            String code = temp + " = " + e1.code + " " + op + " " + e2.code;
+                            if (e1.address.length() > 0 && e2.address.length() > 0) {
+                              code = e1.code + "\n" + e2.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.address;
+                            } else if (e1.address.length() > 0) {
+                              code = e1.code + "\n" + temp + " = " + e1.address + " " + op + " " + e2.code;
+                            } else if (e2.address.length() > 0) {
+                              code = e2.code + "\n" + temp + " = " + e1.code + " " + op + " " + e2.address;
+                            }
+                            RESULT = new SDD(temp, code);
+                          :}
+                          // | expression:e1 EXCLAMATION:op expression:e2
+                          // {:
+                          //   String temp = parser.newVar();
+                          //   RESULT = new SDD(temp, temp + " = " + e1.code + " " + op + " " + e2.code);
+                          // :}
 													;
-expression_list 			::= expression expression_st;
-expression_st 				::= COMMA expression expression_st
+expression_list 			::= expression:e expression_st:e_st
+                          {:
+                            String res = e.code + e_st.code;
+                            RESULT = new SDD(res);
+                          :}
+                          ;
+expression_st 				::= COMMA expression:e expression_st:e_st
+                          {:
+                            String res = e_st.code + parser.delimiter + e.code;
+                            RESULT = new SDD(res);
+                          :}
 													|
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 unary_expr 						::= primary_expr:p_exp
                           {:
-                            RESULT = p_exp;
+                            RESULT = new SDD(p_exp);
                           :}
-													| unary_op unary_expr
+													| MINUS unary_expr
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          | EXCLAMATION unary_expr
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          | ASTRISK unary_expr
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 primary_expr					::= operand:op
                           {:
-                            RESULT = op;
+                            RESULT = new SDD(op);
                           :}
 													| primary_expr selector
-													| primary_expr:p arguments
                           {:
-                            RESULT = parser.newVar() + " = " + "call " + p + "\n" + "pop_params;";
+                            RESULT = new SDD();
+                          :}
+													| primary_expr:p arguments:a
+                          {:
+                            String[] params = a.code.split(parser.delimiter);
+                            String paramString = "";
+                            int i = 0;
+                            for (String param : params) {
+                              paramString += "push_params: " + param;
+                              paramString += "\n";
+                            }
+                            String t = parser.newVar();
+                            String pop = (a.code.length() > 0) ? "\npop_params;" : "" ;
+                            RESULT = new SDD(t, paramString + t + " = " + "call " + p.code + pop);
                           :}
 													;
 operand 							::= literal:lit
                           {:
-                            RESULT = lit;
+                            RESULT = new SDD(lit);
                           :}
 													| operand_name:op
                           {:
-                            RESULT = op;
+                            RESULT = new SDD(op);
                           :}
-													| OPEN_PARAN expression CLOSE_PARAN
+													| OPEN_PARAN expression:e CLOSE_PARAN
+                          {:
+                            RESULT = new SDD(e);
+                          :}
 													;
 literal 							::= basic_lit:b_lit
                           {:
-                            RESULT = b_lit;
+                            RESULT = new SDD(b_lit);
                           :}
 													| function_lit
+                          {:
+                            RESULT = new SDD();
+                          :}
 													;
 basic_lit 						::= INT_LIT:i
                           {:
-                            RESULT = i;
+                            RESULT = new SDD(i);
                           :}
 													| STRING_LIT:s
                           {:
-                            RESULT = s;
+                            RESULT = new SDD(s);
                           :}
 													;
-function_lit 					::= FUNC function;
-selector 							::= DOT IDENTIFIER;
+function_lit 					::= FUNC function
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
+selector 							::= DOT IDENTIFIER
+                          {:
+                            RESULT = new SDD();
+                          :}
+                          ;
 arguments 						::= OPEN_PARAN CLOSE_PARAN
                           {:
-                            RESULT = "";
+                            RESULT = new SDD();
                           :}
 													| OPEN_PARAN expression_list:el CLOSE_PARAN
                           {:
+                            RESULT = new SDD(el);
                           :}
 													;
 operand_name 					::= IDENTIFIER:id
                           {:
-                            RESULT = id;
+                            RESULT = new SDD(id);
                           :}
 													| qualified_ident:id
                           {:
-                            RESULT = id;
+                            RESULT = new SDD(id);
                           :}
 													;
 qualified_ident 			::= DOT package_name DOT IDENTIFIER:id
                           {:
-                            RESULT = id;
+                            RESULT = new SDD(id);
                           :}
                           ;
 /********************************************************************/
 
 /* Operators ********************************************************/
-binary_op ::= OR_OP:op
-              {:
-                RESULT = op;
-              :}
-							| AND_OP:op
-              {:
-                RESULT = op;
-              :}
-							| REL_OP:op
-              {:
-                RESULT = op;
-              :}
-							| add_op:op
-              {:
-                RESULT = op;
-              :}
-							| mul_op:op
-              {:
-                RESULT = op;
-              :}
-							;
+// binary_op ::= OR_OP:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| AND_OP:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| REL_OP:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| add_op:op
+//               {:
+//                 RESULT = new SDD(op.code);
+//               :}
+//               | mul_op:op
+//               {:
+//                 RESULT = new SDD(op.code);
+//               :}
+// 							;
 add_op ::=		PLUS:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							| MINUS:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							| BAR:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							;
 mul_op ::=		ASTRISK:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							| SLASH:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							| PERCENT:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							| SHIFT_LEFT:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							| SHIFT_RIGHT:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							| AMBERSAND:op
               {:
-                RESULT = op;
+                RESULT = new SDD(op);
               :}
 							;
-unary_op ::=  PLUS:op
-              {:
-                RESULT = op;
-              :}
-							| MINUS:op
-              {:
-                RESULT = op;
-              :}
-							| EXCLAMATION:op
-              {:
-                RESULT = op;
-              :}
-							| ASTRISK:op
-              {:
-                RESULT = op;
-              :}
-							| AMBERSAND:op
-              {:
-                RESULT = op;
-              :}
-							| LESS_DASH:op
-              {:
-                RESULT = op;
-              :}
-							;
+// unary_op ::=  PLUS:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| MINUS:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| EXCLAMATION:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| ASTRISK:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| AMBERSAND:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							| LESS_DASH:op
+//               {:
+//                 RESULT = new SDD(op);
+//               :}
+// 							;
 /********************************************************************/
