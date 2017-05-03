@@ -122,7 +122,7 @@ nonterminal SDD 	for_stmt, condition, for_clause,
 							init_stmt, post_stmt;
 /********************************************************************/
 
-precedence left 	COMMA;
+precedence left 	COMMA, COLON_EQUAL;
 precedence right 	EQUAL;
 precedence left 	OR_OP;
 precedence left 	AND_OP;
@@ -311,19 +311,6 @@ var_spec 							::=
                             }
                           :}
                           ;
-// var_spec_grp 					::= type
-//                           {:
-//                             RESULT = new SDD();
-//                           :}
-// 													| type EQUAL expression:e
-//                           {:
-//                             RESULT = new SDD(" = " + e.address + " " + e.code);
-//                           :}
-// 													| EQUAL expression:e
-//                           {:
-//                             RESULT = new SDD(" = " + e.address + " " + e.code);
-//                           :}
-// 													;
 var_spec_st 					::= var_spec:v SEMI_COLON var_spec_st:v_st
                           {:
                             String res = v_st.code + v.code;
@@ -487,9 +474,9 @@ simple_stmt 					::= expression_stmt:e
                           {:
                             RESULT = new SDD();
                           :}
-													| assignment
+													| assignment:a
                           {:
-                            RESULT = new SDD();
+                            RESULT = new SDD(a);
                           :}
 													| short_var_decl:sh
                           {:
@@ -516,22 +503,22 @@ inc_dec_stmt_grp			::= INCREMENT
                           :}
 													;
 /* Assignment *******************************************************/
-assignment 						::= expression_list assign_op expression_list
+assignment 						::= expression_list:el1 assign_op:op expression_list:el2
                           {:
-                            RESULT = new SDD();
+                            RESULT = new SDD(el2.code + "\n" + el1.code + " " + op.code + " " + el2.address);
                           :}
                           ;
-assign_op 						::= EQUAL
+assign_op 						::= EQUAL:e
                           {:
-                            RESULT = new SDD();
+                            RESULT = new SDD(e);
                           :}
-													| add_op EQUAL
+													| add_op:op EQUAL:e
                           {:
-                            RESULT = new SDD();
+                            RESULT = new SDD(op.code + e);
                           :}
-													| mul_op EQUAL
+													| mul_op:op EQUAL:e
                           {:
-                            RESULT = new SDD();
+                            RESULT = new SDD(op.code + e);
                           :}
 													;
 /* IF ELSE statement ************************************************/
@@ -656,9 +643,10 @@ return_stmt 					::= RETURN:r
                           {:
                             RESULT = new SDD(r);
                           :}
-													| RETURN:r expression_list
+													| RETURN:r expression_list:el
                           {:
-                            RESULT = new SDD(r);
+                            String expList = el.code.replace(parser.delimiter, ",");
+                            RESULT = new SDD(r + " " + expList);
                           :}
 													;
 /********************************************************************/

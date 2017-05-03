@@ -42,6 +42,5 @@ public class AP {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 }
