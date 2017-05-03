@@ -1,5 +1,6 @@
 import java.io.*;
 import java_cup.runtime.*;
+import java.util.ArrayList;
 
 // [] = ?
 // {} = *				 -> _st
@@ -53,6 +54,14 @@ parser code {:
       public String toString() {
         return this.code;
       }
+
+      public boolean hasAddress() {
+        return this.address.length() > 0;
+      }
+    }
+
+    public class ExpList {
+      public ArrayList<SDD> list = new ArrayList<>();
     }
 :};
 
@@ -105,8 +114,8 @@ nonterminal SDD 	function_type, signature, parameters, parameter_list,
 
 nonterminal SDD 	method_decl, method_name, receiver;
 
-nonterminal SDD 	expression, expression_list,
-							expression_st, unary_expr, primary_expr, selector, arguments;
+nonterminal SDD 	expression, unary_expr, primary_expr, selector;
+nonterminal ExpList arguments, expression_list, expression_st;
 nonterminal SDD 	operand, literal, operand_name, qualified_ident;
 nonterminal SDD 	basic_lit, function_lit;
 
@@ -505,7 +514,23 @@ inc_dec_stmt_grp			::= INCREMENT
 /* Assignment *******************************************************/
 assignment 						::= expression_list:el1 assign_op:op expression_list:el2
                           {:
-                            RESULT = new SDD(el2.code + "\n" + el1.code + " " + op.code + " " + el2.address);
+                            int min = Math.min(el1.list.size(), el2.list.size());
+                            String res = "";
+                            for (int i = 0; i < min; i++) {
+                              SDD s1 = el1.list.get(i);
+                              SDD s2 = el2.list.get(i);
+                              if (s2.hasAddress()) {
+                                res += s2.code;
+                                res += "\n";
+                                res += s1.code + " " + op + " " + s2.address;
+                              } else {
+                                res += s1.code + " " + op + " " + s2.code;
+                              }
+                              if (i != min - 1) {
+                                res += "\n";
+                              }
+                            }
+                            RESULT = new SDD(res);
                           :}
                           ;
 assign_op 						::= EQUAL:e
@@ -645,7 +670,11 @@ return_stmt 					::= RETURN:r
                           :}
 													| RETURN:r expression_list:el
                           {:
-                            String expList = el.code.replace(parser.delimiter, ",");
+                            String expList = "";
+                            for (SDD sdd : el.list) {
+                              expList += sdd.code + ",";
+                            }
+                            expList = expList.substring(0, expList.length() - 1);
                             RESULT = new SDD(r + " " + expList);
                           :}
 													;
@@ -898,18 +927,20 @@ expression		 				::= unary_expr:un_exp
 													;
 expression_list 			::= expression:e expression_st:e_st
                           {:
-                            String res = e.code + e_st.code;
-                            RESULT = new SDD(res);
+                            // String res = e.code + e_st.code;
+                            e_st.list.add(0, e);
+                            RESULT = e_st;
                           :}
                           ;
 expression_st 				::= COMMA expression:e expression_st:e_st
                           {:
-                            String res = e_st.code + parser.delimiter + e.code;
-                            RESULT = new SDD(res);
+                            e_st.list.add(e);
+                            // String res = e_st.code + parser.delimiter + e.code;
+                            RESULT = e_st;
                           :}
 													|
                           {:
-                            RESULT = new SDD();
+                            RESULT = new ExpList();
                           :}
 													;
 unary_expr 						::= primary_expr:p_exp
@@ -939,15 +970,22 @@ primary_expr					::= operand:op
                           :}
 													| primary_expr:p arguments:a
                           {:
-                            String[] params = a.code.split(parser.delimiter);
+                            // String[] params = a.code.split(parser.delimiter);
                             String paramString = "";
-                            int i = 0;
-                            for (String param : params) {
-                              paramString += "push_params: " + param;
+                            // int i = 0;
+                            for (SDD sdd : a.list) {
+
+                              if (sdd.address.length() > 0) {
+                                paramString += sdd.code;
+                                paramString += "\n";
+                                paramString += "push_params: " + sdd.address;
+                              } else {
+                                paramString += "push_params: " + sdd.code;
+                              }
                               paramString += "\n";
                             }
                             String t = parser.newVar();
-                            String pop = (a.code.length() > 0) ? "\npop_params;" : "" ;
+                            String pop = (a.list.size() > 0) ? "\npop_params;" : "" ;
                             RESULT = new SDD(t, paramString + t + " = " + "call " + p.code + pop);
                           :}
 													;
@@ -994,11 +1032,11 @@ selector 							::= DOT IDENTIFIER
                           ;
 arguments 						::= OPEN_PARAN CLOSE_PARAN
                           {:
-                            RESULT = new SDD();
+                            RESULT = new ExpList();
                           :}
 													| OPEN_PARAN expression_list:el CLOSE_PARAN
                           {:
-                            RESULT = new SDD(el);
+                            RESULT = el;
                           :}
 													;
 operand_name 					::= IDENTIFIER:id
